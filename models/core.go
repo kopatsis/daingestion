@@ -25,7 +25,8 @@ type IngestEvent struct {
 			Document struct {
 				Referrer string `json:"referrer"`
 				Location struct {
-					Href string `json:"href"`
+					Href   string `json:"href"`
+					Search string `json:"search"`
 				} `json:"location"`
 				Rest json.RawMessage `json:"-"`
 			} `json:"document"`
@@ -48,8 +49,9 @@ type IngestEvent struct {
 	} `json:"init"`
 
 	Session struct {
-		Current  string `json:"current"`
-		Previous string `json:"previous"`
+		Current     string `json:"current"`
+		Previous    string `json:"previous"`
+		Persistence bool   `json:"persistence"`
 	} `json:"session"`
 
 	Time int64 `json:"time"`

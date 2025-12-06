@@ -41,5 +41,11 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	w.WriteHeader(200)
+	uaInfo := steps.ParseUA(ev.Event.Context.Navigator.UserAgent)
+	ip, ipHash := steps.GetClientIP(req)
+	ref := steps.ParseReferrer(ev.Event.Context.Document.Referrer)
+	utm, other := steps.ParseUTM(ev.Event.Context.Document.Location.Search), steps.ParseNonUTMParams(ev.Event.Context.Document.Location.Search)
+	geo := steps.ExtractGeo(ip, r.City, r.ASN)
+
+	w.Write([]byte(uaInfo.BotCategory + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg))
 }

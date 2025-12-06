@@ -49,6 +49,12 @@ register(({ analytics, browser, init }) => {
         return true
     }
 
+    async function TestLocalStorage(browser) {
+        const got = await browser.localStorage.getItem('px_sess')
+        return got !== null && got !== undefined
+    }
+    
+
 
     async function GetSessionId(browser) {
         const storage = browser.localStorage
@@ -82,7 +88,9 @@ register(({ analytics, browser, init }) => {
             const [sid, old] = await GetSessionId(browser)
             await SetSessionCookie(browser, sid)
 
+            const hasPersistence = TestLocalStorage(browser)
             const sessionObj = old ? { current: sid, previous: old } : { current: sid, previous: "" }
+            session.persistence = hasPersistence
 
             const payload = {
                 event: event,
