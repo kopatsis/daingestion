@@ -1,12 +1,15 @@
 package routing
 
 import (
+	"context"
 	"dmd/initial"
 	"dmd/models"
+	"dmd/output"
 	"dmd/steps"
 	"encoding/json"
 	"net/http"
 
+	"cloud.google.com/go/pubsub/v2"
 	"github.com/oschwald/maxminddb-golang/v2"
 )
 
@@ -14,10 +17,11 @@ type Router struct {
 	City        *maxminddb.Reader
 	ASN         *maxminddb.Reader
 	DataCenters *initial.DataCenterASNs
+	PubSub      *pubsub.Client
 }
 
-func New(a *maxminddb.Reader, b *maxminddb.Reader, c *initial.DataCenterASNs) *Router {
-	return &Router{City: a, ASN: b, DataCenters: c}
+func New(a *maxminddb.Reader, b *maxminddb.Reader, c *initial.DataCenterASNs, d *pubsub.Client) *Router {
+	return &Router{City: a, ASN: b, DataCenters: c, PubSub: d}
 }
 
 func (r *Router) Register(mux *http.ServeMux) {
@@ -53,6 +57,13 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	geo := steps.ExtractGeo(ip, r.City, r.ASN)
 	screen := steps.BucketScreenSizes(ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height)
 	pageType := steps.Classify(ev.Event.Context.Document.Location.Href)
+
+	outputData := output.Output{EventName: param, Timestamp: ev.Event.Timestamp, Data: ""}
+
+	if err := output.PublishOutput(context.Background(), r.PubSub, "topic", outputData); err != nil {
+		http.Error(w, "couldn't push to pub sub", http.StatusBadRequest)
+		return
+	}
 
 	w.Write([]byte(uaInfo.BotCategory + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType)))
 }

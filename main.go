@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"dmd/initial"
+	"dmd/output"
 	"dmd/routing"
 	"net/http"
 )
@@ -17,7 +19,12 @@ func main() {
 		panic(err)
 	}
 
-	r := routing.New(city, asn, &datacenters)
+	pubsubClient, err := output.NewPubSubClient(context.Background(), "id")
+	if err != nil {
+		panic(err)
+	}
+
+	r := routing.New(city, asn, &datacenters, pubsubClient)
 
 	mux := http.NewServeMux()
 	r.Register(mux)
