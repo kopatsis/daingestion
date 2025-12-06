@@ -17,12 +17,8 @@ type IngestEvent struct {
 				} `json:"screen"`
 				Rest json.RawMessage `json:"-"`
 			} `json:"window"`
-			Navigator struct {
-				CookieEnabled bool            `json:"cookieEnabled"`
-				UserAgent     string          `json:"userAgent"`
-				Rest          json.RawMessage `json:"-"`
-			} `json:"navigator"`
-			Document struct {
+			Navigator Navigator `json:"navigator"`
+			Document  struct {
 				Referrer string `json:"referrer"`
 				Location struct {
 					Href   string `json:"href"`
@@ -55,4 +51,11 @@ type IngestEvent struct {
 	} `json:"session"`
 
 	Time int64 `json:"time"`
+}
+
+type Navigator struct {
+	CookieEnabled bool     `json:"cookieEnabled"`
+	Language      string   `json:"userAgent"`
+	Languages     []string `json:"languages"`
+	UserAgent     string   `json:"language"`
 }

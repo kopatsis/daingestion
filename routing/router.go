@@ -2,12 +2,14 @@ package routing
 
 import (
 	"context"
+	"dmd/bots"
 	"dmd/initial"
 	"dmd/models"
 	"dmd/output"
 	"dmd/steps"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/oschwald/maxminddb-golang/v2"
@@ -58,6 +60,11 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	screen := steps.BucketScreenSizes(ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height)
 	pageType := steps.Classify(ev.Event.Context.Document.Location.Href)
 
+	datacenter := bots.FromDataCenter(geo.ASN, r.DataCenters.Orgs)
+	genericEval := bots.ExtractSignals(req, ev.Event.Context.Document.Referrer, ev.Event.Context.Navigator.UserAgent)
+	specificEval := bots.EvaluateSpecific(req, ev.Event.Context.Document.Referrer, ev.Event.Context.Navigator, ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height, ev.Init.Data.Shop.MyShopifyDomain)
+	botScore := bots.EvaluateBot(genericEval, specificEval, datacenter != "", uaInfo.IsBot)
+
 	outputData := output.Output{EventName: param, Timestamp: ev.Event.Timestamp, Data: ""}
 
 	if err := output.PublishOutput(context.Background(), r.PubSub, "topic", outputData); err != nil {
@@ -65,5 +72,5 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	w.Write([]byte(uaInfo.BotCategory + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType)))
+	w.Write([]byte(uaInfo.BotCategory + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + datacenter + strconv.Itoa(int(botScore))))
 }
