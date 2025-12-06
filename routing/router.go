@@ -3,6 +3,7 @@ package routing
 import (
 	"dmd/initial"
 	"dmd/models"
+	"dmd/steps"
 	"encoding/json"
 	"net/http"
 
@@ -27,23 +28,8 @@ func (r *Router) Register(mux *http.ServeMux) {
 }
 
 func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) {
-	valid := map[string]struct{}{
-		"cart_viewed":                      {},
-		"checkout_address_info_submitted":  {},
-		"checkout_completed":               {},
-		"checkout_contact_info_submitted":  {},
-		"checkout_shipping_info_submitted": {},
-		"checkout_started":                 {},
-		"collection_viewed":                {},
-		"page_viewed":                      {},
-		"payment_info_submitted":           {},
-		"product_added_to_cart":            {},
-		"product_removed_from_cart":        {},
-		"product_viewed":                   {},
-		"search_submitted":                 {},
-	}
 
-	if _, ok := valid[param]; !ok {
+	if !steps.CheckEvent(param) {
 		http.Error(w, "invalid event", http.StatusBadRequest)
 		return
 	}

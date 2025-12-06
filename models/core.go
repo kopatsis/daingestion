@@ -48,11 +48,9 @@ type IngestEvent struct {
 	} `json:"init"`
 
 	Session struct {
-		Current  string          `json:"current"`
-		Previous string          `json:"previous"`
-		Rest     json.RawMessage `json:"-"`
+		Current  string `json:"current"`
+		Previous string `json:"previous"`
 	} `json:"session"`
 
-	Time int64           `json:"time"`
-	Rest json.RawMessage `json:"-"`
+	Time int64 `json:"time"`
 }

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	. "github.com/gamebtc/devicedetector"
+	"github.com/gamebtc/devicedetector"
 )
 
 func L() {
-	dd, err := NewDeviceDetector("regexes")
+	dd, err := devicedetector.NewDeviceDetector("regexes")
 	if err != nil {
 		log.Fatal(err)
 	}
