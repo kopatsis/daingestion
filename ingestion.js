@@ -82,15 +82,16 @@ register(({ analytics, browser, init }) => {
             const [sid, old] = await GetSessionId(browser)
             await SetSessionCookie(browser, sid)
 
-            const sessionObj = old ? { current: sid, previous: old } : { current: sid }
+            const sessionObj = old ? { current: sid, previous: old } : { current: sid, previous: "" }
 
             const payload = {
                 event: event,
                 init: baseInit,
-                session: sessionObj
+                session: sessionObj,
+                time: time.Now()
             }
 
-            fetch('https://YOUR_ENDPOINT_HERE', {
+            fetch('https://YOUR_ENDPOINT_HERE/' + ev, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
