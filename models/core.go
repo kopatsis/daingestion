@@ -4,58 +4,58 @@ import "encoding/json"
 
 type IngestEvent struct {
 	Event struct {
-		Name      string `json:"name"`
-		Timestamp int64  `json:"timestamp"`
-		ClientID  string `json:"clientID"`
+		Name      string `json:"name" validate:"required"`
+		Timestamp int64  `json:"timestamp" validate:"required"`
+		ClientID  string `json:"clientID" validate:"required"`
 		Context   struct {
 			Window struct {
-				InnerHeight int `json:"innerHeight"`
-				InnerWidth  int `json:"innerWidth"`
+				InnerHeight int `json:"innerHeight" validate:"required"`
+				InnerWidth  int `json:"innerWidth" validate:"required"`
 				Screen      struct {
-					Height int `json:"height"`
-					Width  int `json:"width"`
-				} `json:"screen"`
+					Height int `json:"height" validate:"required"`
+					Width  int `json:"width" validate:"required"`
+				} `json:"screen" validate:"required"`
 				Rest json.RawMessage `json:"-"`
-			} `json:"window"`
-			Navigator Navigator `json:"navigator"`
+			} `json:"window" validate:"required"`
+			Navigator Navigator `json:"navigator" validate:"required"`
 			Document  struct {
-				Referrer string `json:"referrer"`
+				Referrer string `json:"referrer" validate:"required"`
 				Location struct {
-					Href   string `json:"href"`
-					Search string `json:"search"`
-				} `json:"location"`
+					Href   string `json:"href" validate:"required"`
+					Search string `json:"search" validate:"required"`
+				} `json:"location" validate:"required"`
 				Rest json.RawMessage `json:"-"`
-			} `json:"document"`
+			} `json:"document" validate:"required"`
 			Rest json.RawMessage `json:"-"`
-		} `json:"context"`
-		Data json.RawMessage `json:"data"`
+		} `json:"context" validate:"required"`
+		Data json.RawMessage `json:"data" validate:"required"`
 		Rest json.RawMessage `json:"-"`
-	} `json:"event"`
+	} `json:"event" validate:"required"`
 
 	Init struct {
 		Data struct {
 			Shop struct {
-				Name            string          `json:"name"`
-				MyShopifyDomain string          `json:"myshopifyDomain"`
+				Name            string          `json:"name" validate:"required"`
+				MyShopifyDomain string          `json:"myshopifyDomain" validate:"required"`
 				Rest            json.RawMessage `json:"-"`
-			} `json:"shop"`
+			} `json:"shop" validate:"required"`
 			Rest json.RawMessage `json:"-"`
-		} `json:"data"`
+		} `json:"data" validate:"required"`
 		Rest json.RawMessage `json:"-"`
-	} `json:"init"`
+	} `json:"init" validate:"required"`
 
 	Session struct {
-		Current     string `json:"current"`
-		Previous    string `json:"previous"`
-		Persistence bool   `json:"persistence"`
-	} `json:"session"`
+		Current     string `json:"current" validate:"required"`
+		Previous    string `json:"previous" validate:"required"`
+		Persistence bool   `json:"persistence" validate:"required"`
+	} `json:"session" validate:"required"`
 
-	Time int64 `json:"time"`
+	Time int64 `json:"time" validate:"required"`
 }
 
 type Navigator struct {
-	CookieEnabled bool     `json:"cookieEnabled"`
-	Language      string   `json:"userAgent"`
-	Languages     []string `json:"languages"`
-	UserAgent     string   `json:"language"`
+	CookieEnabled bool     `json:"cookieEnabled" validate:"required"`
+	Language      string   `json:"userAgent" validate:"required"`
+	Languages     []string `json:"languages" validate:"required"`
+	UserAgent     string   `json:"language" validate:"required"`
 }
