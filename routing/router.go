@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"cloud.google.com/go/pubsub/v2"
+	"github.com/go-redis/redis"
 	"github.com/oschwald/maxminddb-golang/v2"
 )
 
@@ -20,10 +21,11 @@ type Router struct {
 	ASN         *maxminddb.Reader
 	DataCenters *initial.DataCenterASNs
 	PubSub      *pubsub.Client
+	RDB         *redis.Client
 }
 
-func New(a *maxminddb.Reader, b *maxminddb.Reader, c *initial.DataCenterASNs, d *pubsub.Client) *Router {
-	return &Router{City: a, ASN: b, DataCenters: c, PubSub: d}
+func New(a *maxminddb.Reader, b *maxminddb.Reader, c *initial.DataCenterASNs, d *pubsub.Client, e *redis.Client) *Router {
+	return &Router{City: a, ASN: b, DataCenters: c, PubSub: d, RDB: e}
 }
 
 func (r *Router) Register(mux *http.ServeMux) {

@@ -24,7 +24,9 @@ func main() {
 		panic(err)
 	}
 
-	r := routing.New(city, asn, &datacenters, pubsubClient)
+	rdb := initial.NewRedis()
+
+	r := routing.New(city, asn, &datacenters, pubsubClient, rdb)
 
 	mux := http.NewServeMux()
 	r.Register(mux)
