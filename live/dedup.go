@@ -1,15 +1,16 @@
 package live
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 func Dedup(client *redis.Client, store, clientID, url string, now int64) (bool, error) {
 	key := "dedupe:" + store + ":" + clientID
-	v, err := client.Get(key).Result()
+	v, err := client.Get(context.TODO(), key).Result()
 	if err != nil && err != redis.Nil {
 		return false, err
 	}
@@ -27,7 +28,7 @@ func Dedup(client *redis.Client, store, clientID, url string, now int64) (bool, 
 		URL string
 		TS  int64
 	}{URL: url, TS: now})
-	err = client.Set(key, b, 5*time.Second).Err()
+	err = client.Set(context.TODO(), key, b, 5*time.Second).Err()
 	if err != nil {
 		return false, err
 	}
@@ -36,7 +37,7 @@ func Dedup(client *redis.Client, store, clientID, url string, now int64) (bool, 
 
 func DedupEventID(client *redis.Client, store, eventID string) (bool, error) {
 	key := "eventid:" + store + ":" + eventID
-	ok, err := client.SetNX(key, "", 90*time.Second).Result()
+	ok, err := client.SetNX(context.TODO(), key, "", 90*time.Second).Result()
 	if err != nil {
 		return false, err
 	}

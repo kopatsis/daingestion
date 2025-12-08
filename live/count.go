@@ -1,16 +1,17 @@
 package live
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 func AddActive(rdb *redis.Client, tenant, dim, id, sessionID string) {
 	now := time.Now()
 	b := now.Unix() / 10
 	k := fmt.Sprintf("active:%s:%s:%s:%d", tenant, dim, id, b)
-	rdb.SAdd(k, sessionID)
-	rdb.Expire(k, 4*time.Minute)
+	rdb.SAdd(context.TODO(), k, sessionID)
+	rdb.Expire(context.TODO(), k, 4*time.Minute)
 }

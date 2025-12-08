@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 func CheckAndIncrement(ctx context.Context, rdb *redis.Client, planKey string, counterKey string) (bool, error) {
-	planData, err := rdb.HGetAll(planKey).Result()
+	planData, err := rdb.HGetAll(context.TODO(), planKey).Result()
 	if err != nil {
 		return false, err
 	}
@@ -24,15 +24,15 @@ func CheckAndIncrement(ctx context.Context, rdb *redis.Client, planKey string, c
 		newReset := t.Unix()
 		ttl := newReset - now
 		p := rdb.TxPipeline()
-		p.HSet(planKey, "reset_at", strconv.FormatInt(newReset, 10))
-		p.Set(counterKey, "1", time.Duration(ttl)*time.Second)
-		_, err := p.Exec()
+		p.HSet(context.TODO(), planKey, "reset_at", strconv.FormatInt(newReset, 10))
+		p.Set(context.TODO(), counterKey, "1", time.Duration(ttl)*time.Second)
+		_, err := p.Exec(context.TODO())
 		if err != nil {
 			return false, err
 		}
 		return false, nil
 	}
-	count, err := rdb.Incr(counterKey).Result()
+	count, err := rdb.Incr(context.TODO(), counterKey).Result()
 	if err != nil {
 		return false, err
 	}

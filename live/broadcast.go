@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 type Event struct {
@@ -21,5 +21,5 @@ func PublishEvent(ctx context.Context, rdb *redis.Client, e Event) error {
 	if err != nil {
 		return err
 	}
-	return rdb.Publish(ch, b).Err()
+	return rdb.Publish(context.TODO(), ch, b).Err()
 }

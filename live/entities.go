@@ -1,11 +1,12 @@
 package live
 
 import (
+	"context"
 	"dmd/models"
 	"encoding/json"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 func AllLiveUpdates(ev *models.IngestEvent, rdb *redis.Client, store, eventType string) error {
@@ -41,6 +42,6 @@ func UpdateCustomer(ev *models.IngestEvent, rdb *redis.Client, store string) err
 	}
 
 	key := "lastseen:" + store + ":cust:" + p.Customer.ID
-	_, err := rdb.Set(key, time.Now().Unix(), 0).Result()
+	_, err := rdb.Set(context.TODO(), key, time.Now().Unix(), 0).Result()
 	return err
 }

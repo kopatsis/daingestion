@@ -44,12 +44,6 @@ type IngestEvent struct {
 		Rest json.RawMessage `json:"-"`
 	} `json:"init" validate:"required"`
 
-	Session struct {
-		Current     string `json:"current" validate:"required"`
-		Previous    string `json:"previous" validate:"required"`
-		Persistence bool   `json:"persistence" validate:"required"`
-	} `json:"session" validate:"required"`
-
 	Time int64 `json:"time" validate:"required"`
 }
 

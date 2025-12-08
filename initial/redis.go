@@ -1,7 +1,9 @@
 package initial
 
 import (
-	"github.com/go-redis/redis"
+	"context"
+
+	"github.com/redis/go-redis/v9"
 )
 
 func NewRedis() *redis.Client {
@@ -11,7 +13,7 @@ func NewRedis() *redis.Client {
 		DB:       0,  // use default DB
 	})
 
-	if err := r.Ping().Err(); err != nil {
+	if err := r.Ping(context.Background()).Err(); err != nil {
 		panic(err)
 	}
 	return r

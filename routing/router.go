@@ -4,6 +4,7 @@ import (
 	"context"
 	"dmd/bots"
 	"dmd/initial"
+	"dmd/live"
 	"dmd/models"
 	"dmd/output"
 	"dmd/steps"
@@ -12,8 +13,8 @@ import (
 	"strconv"
 
 	"cloud.google.com/go/pubsub/v2"
-	"github.com/go-redis/redis"
 	"github.com/oschwald/maxminddb-golang/v2"
+	"github.com/redis/go-redis/v9"
 )
 
 type Router struct {
@@ -49,8 +50,9 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	if !steps.CheckSessionID(ev.Session.Current) {
-		http.Error(w, "invalid session ID", http.StatusBadRequest)
+	sessionResults, err := live.ManageSession(context.Background(), r.RDB, ev.Event.ClientID, ev.Init.Data.Shop.Name)
+	if err != nil {
+		http.Error(w, "unable to validate session", http.StatusBadRequest)
 		return
 	}
 
@@ -74,5 +76,5 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	w.Write([]byte(uaInfo.BotCategory + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + datacenter + strconv.Itoa(int(botScore))))
+	w.Write([]byte(sessionResults.SessionID + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + datacenter + strconv.Itoa(int(botScore))))
 }
