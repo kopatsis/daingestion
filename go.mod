@@ -5,14 +5,14 @@ go 1.24.0
 toolchain go1.24.11
 
 require (
-	cloud.google.com/go/pubsub v1.50.1
 	github.com/google/uuid v1.6.0
+	github.com/redis/go-redis/v9 v9.17.2
 )
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/redis/go-redis/v9 v9.17.2 // indirect
+	go.einride.tech/aip v0.73.0 // indirect
 )
 
 require (
@@ -21,18 +21,17 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.8.0 // indirect
 	cloud.google.com/go/iam v1.5.2 // indirect
-	cloud.google.com/go/pubsub/v2 v2.0.0 // indirect
+	cloud.google.com/go/pubsub/v2 v2.0.0
 	github.com/dlclark/regexp2 v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/gamebtc/devicedetector v0.0.0-20200513081329-9d0833c20d79 // indirect
+	github.com/gamebtc/devicedetector v0.0.0-20200513081329-9d0833c20d79
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2 // indirect
-	github.com/oschwald/maxminddb-golang/v2 v2.1.1 // indirect
+	github.com/oschwald/maxminddb-golang/v2 v2.1.1
 	github.com/x-way/crawlerdetect v0.2.28
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
@@ -55,5 +54,4 @@ require (
 	google.golang.org/grpc v1.74.2 // indirect
 	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
-	zgo.at/isbot v1.0.0
 )
