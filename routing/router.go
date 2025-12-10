@@ -69,6 +69,17 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	specificEval := bots.EvaluateSpecific(req, ev.Event.Context.Document.Referrer, ev.Event.Context.Navigator, ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height, ev.Init.Data.Shop.MyShopifyDomain)
 	botScore := bots.EvaluateBot(genericEval, specificEval, datacenter != "", uaInfo.IsBot)
 
+	sessionStruct := live.SessionActiveState{
+		Country:     geo.CountryISO,
+		Region:      geo.SubdivisionISO,
+		City:        geo.CityName,
+		Latitude:    geo.Latitude,
+		Longitude:   geo.Longitude,
+		IsBot:       botScore > 0,
+		ASN:         geo.ASN,
+		ASNProvider: datacenter,
+	}
+
 	outputData := output.Output{EventName: param, Timestamp: ev.Event.Timestamp, Data: ""}
 
 	if err := output.PublishOutput(context.Background(), r.PubSub, "topic", outputData); err != nil {
@@ -76,5 +87,5 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	w.Write([]byte(sessionResults.SessionID + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + datacenter + strconv.Itoa(int(botScore))))
+	w.Write([]byte(sessionStruct.City + sessionResults.SessionID + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + datacenter + strconv.Itoa(int(botScore))))
 }
