@@ -1,6 +1,8 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type IngestEvent struct {
 	Event struct {
@@ -21,8 +23,9 @@ type IngestEvent struct {
 			Document  struct {
 				Referrer string `json:"referrer" validate:"required"`
 				Location struct {
-					Href   string `json:"href" validate:"required"`
-					Search string `json:"search" validate:"required"`
+					Href     string `json:"href" validate:"required"`
+					Search   string `json:"search" validate:"required"`
+					Pathname string `json:"pathname" validate:"required"`
 				} `json:"location" validate:"required"`
 				Rest json.RawMessage `json:"-"`
 			} `json:"document" validate:"required"`
@@ -39,6 +42,13 @@ type IngestEvent struct {
 				MyShopifyDomain string          `json:"myshopifyDomain" validate:"required"`
 				Rest            json.RawMessage `json:"-"`
 			} `json:"shop" validate:"required"`
+			Customer *struct {
+				ID          string          `json:"id"`
+				Email       string          `json:"email"`
+				OrdersCount int64           `json:"ordersCount"`
+				Phone       string          `json:"phone"`
+				Rest        json.RawMessage `json:"-"`
+			} `json:"customer"`
 			Rest json.RawMessage `json:"-"`
 		} `json:"data" validate:"required"`
 		Rest json.RawMessage `json:"-"`
@@ -52,4 +62,11 @@ type Navigator struct {
 	Language      string   `json:"userAgent" validate:"required"`
 	Languages     []string `json:"languages" validate:"required"`
 	UserAgent     string   `json:"language" validate:"required"`
+}
+
+func CheckIfCart(b json.RawMessage) bool {
+	var m map[string]json.RawMessage
+	_ = json.Unmarshal(b, &m)
+	_, ok := m["cart"]
+	return ok
 }
