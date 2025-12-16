@@ -3,12 +3,18 @@ package live
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-func Dedup(client *redis.Client, store, clientID, url string, now int64) (bool, error) {
+func Dedup(client *redis.Client, store, clientID, url, param string, now int64) (bool, error) {
+
+	if !(strings.Contains(param, "viewed") || strings.Contains(param, "started") || param == "search_submitted") {
+		return true, nil
+	}
+
 	key := "dedupe:" + store + ":" + clientID
 	v, err := client.Get(context.TODO(), key).Result()
 	if err != nil && err != redis.Nil {

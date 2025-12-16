@@ -2,8 +2,12 @@ package live
 
 import (
 	"context"
+	"dmd/bots"
+	"dmd/models"
+	"dmd/steps"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -46,6 +50,59 @@ type SessionActiveState struct {
 	HasActiveCart bool
 	IsViewingCart bool
 	IsInCheckout  bool
+}
+
+func CreateSessionStruct(ev models.IngestEvent, geo steps.GeoData, uaInfo steps.UAInfo, utm steps.UTM, pageType steps.PageType, botScore bots.BotLevel, ref steps.Referrer, param, datacenter string) SessionActiveState {
+	sessionStruct := SessionActiveState{
+		Country:     geo.CountryISO,
+		Region:      geo.SubdivisionISO,
+		City:        geo.CityName,
+		Latitude:    geo.Latitude,
+		Longitude:   geo.Longitude,
+		IsBot:       botScore > 0,
+		ASN:         geo.ASN,
+		ASNProvider: datacenter,
+		DeviceType:  uaInfo.Type,
+		DeviceBrand: uaInfo.Brand,
+		OSName:      uaInfo.OSName,
+		BrowserName: uaInfo.ClientName,
+		Language:    ev.Event.Context.Navigator.Language,
+		RefDomain:   ref.DomainOnly,
+		UTMSource:   utm.Source,
+		RouteType:   string(pageType),
+		Route:       ev.Event.Context.Document.Location.Pathname,
+		FullURL:     ev.Event.Context.Document.Location.Href,
+	}
+
+	if ev.Init.Data.Customer != nil {
+		sessionStruct.IsLoggedIn = true
+		sessionStruct.HasPreviousPurchase = ev.Init.Data.Customer.OrdersCount > 0
+	}
+
+	if param == "product_viewed" {
+		variantID, productID, err := ExtractProductIDs(ev.Event.Data)
+		sessionStruct.IsViewingProduct = true
+		if err == nil {
+			sessionStruct.ActiveProductID = productID
+			sessionStruct.ActiveVariantID = variantID
+		}
+	} else if param == "collection_viewed" {
+		collectionID, err := ExtractCollectionID(ev.Event.Data)
+		sessionStruct.IsViewingCollection = true
+		if err == nil {
+			sessionStruct.ActiveCollectionID = collectionID
+		}
+	} else if param == "cart_viewed" {
+		sessionStruct.IsViewingCart = true
+	} else if strings.Contains(param, "checkout") && param != "checkout_completed" {
+		sessionStruct.IsInCheckout = true
+	}
+
+	if models.CheckIfCart(ev.Event.Data) {
+		sessionStruct.HasActiveCart = true
+	}
+
+	return sessionStruct
 }
 
 func SetState(ctx context.Context, rdb *redis.Client, sessionID string, s SessionActiveState) error {
@@ -139,10 +196,42 @@ func GetState(ctx context.Context, rdb *redis.Client, sessionID string) SessionA
 	}
 }
 
-func AddActive(rdb *redis.Client, tenant, dim, id, sessionID string) {
+func AddActive(rdb *redis.Client, store, sessionID string) {
 	now := time.Now()
 	b := now.Unix() / 15
-	k := fmt.Sprintf("active:%s:%s:%s:%d", tenant, dim, id, b)
+	k := fmt.Sprintf("active:%s:%d", store, b)
 	rdb.SAdd(context.TODO(), k, sessionID)
 	rdb.Expire(context.TODO(), k, 4*time.Minute+15*time.Second)
+}
+
+func GetActiveLast16Buckets(rdb *redis.Client, store string) ([]string, error) {
+	now := time.Now().Unix()
+	currentBucket := now / 15
+
+	if now%15 != 0 {
+		currentBucket--
+	}
+
+	startBucket := currentBucket - 15
+
+	ctx := context.TODO()
+	combined := make(map[string]struct{})
+
+	for b := startBucket; b <= currentBucket; b++ {
+		key := fmt.Sprintf("active:%s:%d", store, b)
+		members, err := rdb.SMembers(ctx, key).Result()
+		if err != nil && err != redis.Nil {
+			return nil, err
+		}
+		for _, m := range members {
+			combined[m] = struct{}{}
+		}
+	}
+
+	out := make([]string, 0, len(combined))
+	for k := range combined {
+		out = append(out, k)
+	}
+
+	return out, nil
 }

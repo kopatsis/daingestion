@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/oschwald/maxminddb-golang/v2"
@@ -70,54 +69,7 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	specificEval := bots.EvaluateSpecific(req, ev.Event.Context.Document.Referrer, ev.Event.Context.Navigator, ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height, ev.Init.Data.Shop.MyShopifyDomain)
 	botScore := bots.EvaluateBot(genericEval, specificEval, datacenter != "", uaInfo.IsBot)
 
-	sessionStruct := live.SessionActiveState{
-		Country:     geo.CountryISO,
-		Region:      geo.SubdivisionISO,
-		City:        geo.CityName,
-		Latitude:    geo.Latitude,
-		Longitude:   geo.Longitude,
-		IsBot:       botScore > 0,
-		ASN:         geo.ASN,
-		ASNProvider: datacenter,
-		DeviceType:  uaInfo.Type,
-		DeviceBrand: uaInfo.Brand,
-		OSName:      uaInfo.OSName,
-		BrowserName: uaInfo.ClientName,
-		Language:    ev.Event.Context.Navigator.Language,
-		RefDomain:   ref.DomainOnly,
-		UTMSource:   utm.Source,
-		RouteType:   string(pageType),
-		Route:       ev.Event.Context.Document.Location.Pathname,
-		FullURL:     ev.Event.Context.Document.Location.Href,
-	}
-
-	if ev.Init.Data.Customer != nil {
-		sessionStruct.IsLoggedIn = true
-		sessionStruct.HasPreviousPurchase = ev.Init.Data.Customer.OrdersCount > 0
-	}
-
-	if param == "product_viewed" {
-		variantID, productID, err := live.ExtractProductIDs(ev.Event.Data)
-		sessionStruct.IsViewingProduct = true
-		if err == nil {
-			sessionStruct.ActiveProductID = productID
-			sessionStruct.ActiveVariantID = variantID
-		}
-	} else if param == "collection_viewed" {
-		collectionID, err := live.ExtractCollectionID(ev.Event.Data)
-		sessionStruct.IsViewingCollection = true
-		if err == nil {
-			sessionStruct.ActiveCollectionID = collectionID
-		}
-	} else if param == "cart_viewed" {
-		sessionStruct.IsViewingCart = true
-	} else if strings.Contains(param, "checkout") && param != "checkout_completed" {
-		sessionStruct.IsInCheckout = true
-	}
-
-	if models.CheckIfCart(ev.Event.Data) {
-		sessionStruct.HasActiveCart = true
-	}
+	sessionStruct := live.CreateSessionStruct(ev, geo, uaInfo, utm, pageType, botScore, ref, param, datacenter)
 
 	outputData := output.Output{EventName: param, Timestamp: ev.Event.Timestamp, Data: ""}
 
