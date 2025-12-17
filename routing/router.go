@@ -25,6 +25,32 @@ type Router struct {
 	RDB         *redis.Client
 }
 
+type TempResult struct {
+	Event          models.IngestEvent
+	Geo            steps.GeoData
+	UAInfo         steps.UAInfo
+	UTM            steps.UTM
+	OtherQParams   map[string]string
+	Ref            steps.Referrer
+	GenericEval    bots.RequestSignals
+	SpecificEval   bots.BotSignals
+	SessionResults live.Result
+	SingeResults   SingeResults
+}
+
+type SingeResults struct {
+	PageType   steps.PageType
+	BotScore   bots.BotLevel
+	Param      string
+	DataCenter string
+	IP         string
+	IPHash     string
+	ClientID   string
+	Store      string
+	EventID    string
+	URL        string
+}
+
 func New(a *maxminddb.Reader, b *maxminddb.Reader, c *initial.DataCenterASNs, d *pubsub.Client, e *redis.Client) *Router {
 	return &Router{City: a, ASN: b, DataCenters: c, PubSub: d, RDB: e}
 }
@@ -50,11 +76,7 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	sessionResults, err := live.ManageSession(context.Background(), r.RDB, ev.Event.ClientID, ev.Init.Data.Shop.Name)
-	if err != nil {
-		http.Error(w, "unable to validate session", http.StatusBadRequest)
-		return
-	}
+	eventID, clientID, store := ev.Event.ID, ev.Event.ClientID, ev.Init.Data.Shop.Name
 
 	uaInfo := steps.ParseUA(ev.Event.Context.Navigator.UserAgent)
 	ip, ipHash := steps.GetClientIP(req)
@@ -69,6 +91,29 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	specificEval := bots.EvaluateSpecific(req, ev.Event.Context.Document.Referrer, ev.Event.Context.Navigator, ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height, ev.Init.Data.Shop.MyShopifyDomain)
 	botScore := bots.EvaluateBot(genericEval, specificEval, datacenter != "", uaInfo.IsBot)
 
+	tempResult := TempResult{
+		Event:        ev,
+		Geo:          geo,
+		UAInfo:       uaInfo,
+		UTM:          utm,
+		OtherQParams: other,
+		Ref:          ref,
+		GenericEval:  genericEval,
+		SpecificEval: specificEval,
+		SingeResults: SingeResults{
+			PageType:   pageType,
+			BotScore:   botScore,
+			Param:      param,
+			DataCenter: datacenter,
+			IP:         ip,
+			IPHash:     ipHash,
+			ClientID:   clientID,
+			Store:      store,
+			EventID:    eventID,
+			URL:        ev.Event.Context.Document.Location.Href,
+		},
+	}
+
 	sessionStruct := live.CreateSessionStruct(ev, geo, uaInfo, utm, pageType, botScore, ref, param, datacenter)
 
 	outputData := output.Output{EventName: param, Timestamp: ev.Event.Timestamp, Data: ""}
@@ -78,5 +123,5 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	w.Write([]byte(sessionStruct.City + sessionResults.SessionID + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + datacenter + strconv.Itoa(int(botScore))))
+	w.Write([]byte(tempResult.Geo.IP + sessionStruct.City + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + datacenter + strconv.Itoa(int(botScore))))
 }

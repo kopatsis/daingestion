@@ -57,5 +57,9 @@ func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store strin
 		return Result{}, err
 	}
 
+	if err := AddActive(rdb, store, id); err != nil {
+		return Result{}, err
+	}
+
 	return Result{SessionID: id, Status: SessionValid}, nil
 }

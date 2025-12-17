@@ -8,7 +8,8 @@ type IngestEvent struct {
 	Event struct {
 		Name      string `json:"name" validate:"required"`
 		Timestamp int64  `json:"timestamp" validate:"required"`
-		ClientID  string `json:"clientID" validate:"required"`
+		ClientID  string `json:"clientId" validate:"required"`
+		ID        string `json:"id" validate:"required"`
 		Context   struct {
 			Window struct {
 				InnerHeight int `json:"innerHeight" validate:"required"`

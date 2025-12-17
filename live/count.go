@@ -105,9 +105,9 @@ func CreateSessionStruct(ev models.IngestEvent, geo steps.GeoData, uaInfo steps.
 	return sessionStruct
 }
 
-func SetState(ctx context.Context, rdb *redis.Client, sessionID string, s SessionActiveState) error {
+func SetState(rdb *redis.Client, sessionID string, s SessionActiveState) error {
 	key := "session:" + sessionID
-	_, err := rdb.HSet(ctx, key, map[string]interface{}{
+	_, err := rdb.HSet(context.TODO(), key, map[string]interface{}{
 		"Country":             s.Country,
 		"Region":              s.Region,
 		"City":                s.City,
@@ -141,7 +141,7 @@ func SetState(ctx context.Context, rdb *redis.Client, sessionID string, s Sessio
 	if err != nil {
 		return err
 	}
-	return rdb.Expire(ctx, key, 300000000000).Err()
+	return rdb.Expire(context.TODO(), key, 300000000000).Err()
 }
 
 func GetState(ctx context.Context, rdb *redis.Client, sessionID string) SessionActiveState {
@@ -196,12 +196,20 @@ func GetState(ctx context.Context, rdb *redis.Client, sessionID string) SessionA
 	}
 }
 
-func AddActive(rdb *redis.Client, store, sessionID string) {
+func AddActive(rdb *redis.Client, store, sessionID string) error {
 	now := time.Now()
 	b := now.Unix() / 15
 	k := fmt.Sprintf("active:%s:%d", store, b)
-	rdb.SAdd(context.TODO(), k, sessionID)
-	rdb.Expire(context.TODO(), k, 4*time.Minute+15*time.Second)
+
+	if err := rdb.SAdd(context.TODO(), k, sessionID).Err(); err != nil {
+		return err
+	}
+
+	if err := rdb.Expire(context.TODO(), k, 4*time.Minute+15*time.Second).Err(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GetActiveLast16Buckets(rdb *redis.Client, store string) ([]string, error) {
