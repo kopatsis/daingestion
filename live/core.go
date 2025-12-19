@@ -14,14 +14,14 @@ func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventI
 	if err != nil {
 		return false, err
 	} else if isDedupEvent {
-		return false, nil
+		return true, nil
 	}
 
 	isDedupView, err := Dedup(client, store, clientID, url, param)
 	if err != nil {
 		return false, err
 	} else if isDedupView {
-		return false, nil
+		return true, nil
 	}
 
 	sessionResults, err := ManageSession(context.Background(), client, clientID, store)
@@ -81,5 +81,5 @@ func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventI
 		return false, err
 	}
 
-	return true, nil
+	return false, nil
 }
