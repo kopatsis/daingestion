@@ -2,11 +2,13 @@ package live
 
 import (
 	"context"
+	"dmd/models"
+	"strings"
 
 	"github.com/redis/go-redis/v9"
 )
 
-func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventID, clientID, store, url, param string) (bool, error) {
+func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventID, clientID, store, url, param string, ev *models.IngestEvent) (bool, error) {
 
 	isDedupEvent, err := DedupEventID(client, store, eventID)
 	if err != nil {
@@ -44,13 +46,38 @@ func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventI
 		location += sessionStruct.Country
 	}
 
-	if err := PublishEvent(context.TODO(), client, LiveEvent{
+	lv := LiveEvent{
 		Store:     store,
 		EventCode: param,
 		SessionID: sessionResults.SessionID,
 		Device:    sessionStruct.DeviceType,
 		Location:  location,
-	}.WithHumanizedEvent()); err != nil {
+		URL:       url,
+	}.WithHumanizedEvent()
+
+	if param == "search_submitted" {
+		searchQuery, err := ExtractSearchQuery(ev.Event.Data)
+		if err == nil {
+			lv.Search = &searchQuery
+		}
+	} else if param == "checkout_completed" {
+		orderID, err := ExtractCheckoutOrderID(ev.Event.Data)
+		if err == nil {
+			lv.OrderID = &orderID
+		}
+	} else if param == "collection_viewed" {
+		collectionTitle, err := ExtractCollectionTitle(ev.Event.Data)
+		if err == nil {
+			lv.Collection = &collectionTitle
+		}
+	} else if strings.Contains(param, "product") {
+		orderID, err := ExtractCheckoutOrderID(ev.Event.Data)
+		if err == nil {
+			lv.OrderID = &orderID
+		}
+	}
+
+	if err := PublishEvent(context.TODO(), client, lv); err != nil {
 		return false, err
 	}
 

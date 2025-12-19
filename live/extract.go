@@ -103,3 +103,65 @@ func ExtractCheckoutLineIDs(raw json.RawMessage) ([]LineIDs, error) {
 
 	return out, nil
 }
+
+type DataProductVariantTitle struct {
+	ProductVariant struct {
+		Title string `json:"title"`
+	} `json:"productVariant"`
+}
+
+func ExtractProductVariantTitle(raw json.RawMessage) (string, error) {
+	var d DataProductVariantTitle
+	err := json.Unmarshal(raw, &d)
+	if err != nil {
+		return "", err
+	}
+	return d.ProductVariant.Title, nil
+}
+
+type DataCollectionTitle struct {
+	Collection struct {
+		Title string `json:"title"`
+	} `json:"collection"`
+}
+
+func ExtractCollectionTitle(raw json.RawMessage) (string, error) {
+	var d DataCollectionTitle
+	err := json.Unmarshal(raw, &d)
+	if err != nil {
+		return "", err
+	}
+	return d.Collection.Title, nil
+}
+
+type DataSearchQuery struct {
+	SearchResult struct {
+		Query string `json:"query"`
+	} `json:"searchResult"`
+}
+
+func ExtractSearchQuery(raw json.RawMessage) (string, error) {
+	var d DataSearchQuery
+	err := json.Unmarshal(raw, &d)
+	if err != nil {
+		return "", err
+	}
+	return d.SearchResult.Query, nil
+}
+
+type DataCheckoutOrderID struct {
+	Checkout struct {
+		Order struct {
+			ID string `json:"id"`
+		} `json:"order"`
+	} `json:"checkout"`
+}
+
+func ExtractCheckoutOrderID(raw json.RawMessage) (string, error) {
+	var d DataCheckoutOrderID
+	err := json.Unmarshal(raw, &d)
+	if err != nil {
+		return "", err
+	}
+	return d.Checkout.Order.ID, nil
+}

@@ -9,14 +9,18 @@ import (
 )
 
 type LiveEvent struct {
-	Store     string
-	EventCode string
-	EventName string
-	SessionID string
-	Customer  string
-	Device    string
-	Location  string
-	Detail    string
+	Store      string
+	EventCode  string
+	EventName  string
+	SessionID  string
+	Customer   string
+	Device     string
+	Location   string
+	URL        string
+	Search     *string
+	Product    *string
+	Collection *string
+	OrderID    *string
 }
 
 func (e LiveEvent) WithHumanizedEvent() LiveEvent {
