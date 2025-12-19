@@ -31,9 +31,26 @@ func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventI
 		return false, err
 	}
 
-	if err := PublishEvent(context.TODO(), client, Event{
-		// Create proper struct here to desseminate information
-	}); err != nil {
+	location := ""
+	if sessionStruct.Country == "" {
+		location = "Unknown Location"
+	} else {
+		if sessionStruct.City != "" {
+			location = sessionStruct.City + ", "
+		}
+		if sessionStruct.Region != "" {
+			location += sessionStruct.Region + ", "
+		}
+		location += sessionStruct.Country
+	}
+
+	if err := PublishEvent(context.TODO(), client, LiveEvent{
+		Store:     store,
+		EventCode: param,
+		SessionID: sessionResults.SessionID,
+		Device:    sessionStruct.DeviceType,
+		Location:  location,
+	}.WithHumanizedEvent()); err != nil {
 		return false, err
 	}
 
