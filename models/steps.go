@@ -38,6 +38,7 @@ type GeoData struct {
 	AccuracyRadius  uint16
 	ASN             uint
 	ASNOrg          string
+	DataCenter      string
 }
 
 type UTM struct {

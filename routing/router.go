@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/oschwald/maxminddb-golang/v2"
@@ -37,6 +38,7 @@ func (r *Router) Register(mux *http.ServeMux) {
 }
 
 func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) {
+	now := time.Now()
 
 	if !steps.CheckEvent(param) {
 		http.Error(w, "invalid event", http.StatusBadRequest)
@@ -50,7 +52,7 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	eventID, clientID, store := ev.Event.ID, ev.Event.ClientID, ev.Init.Data.Shop.Name
+	eventID, clientID, store := ev.Event.ID, ev.Event.ClientID, ev.Init.Data.Shop.MyShopifyDomain
 
 	uaInfo := steps.ParseUA(ev.Event.Context.Navigator.UserAgent)
 	ip, ipHash := steps.GetClientIP(req)
@@ -60,13 +62,13 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	screen := steps.BucketScreenSizes(ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height)
 	pageType := steps.Classify(ev.Event.Context.Document.Location.Href)
 
-	datacenter := bots.FromDataCenter(geo.ASN, r.DataCenters.Orgs)
+	geo.DataCenter = bots.FromDataCenter(geo.ASN, r.DataCenters.Orgs)
 	genericEval := bots.ExtractSignals(req, ev.Event.Context.Document.Referrer, ev.Event.Context.Navigator.UserAgent)
 	specificEval := bots.EvaluateSpecific(req, ev.Event.Context.Document.Referrer, ev.Event.Context.Navigator, ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height, ev.Init.Data.Shop.MyShopifyDomain)
-	botScore := bots.EvaluateBot(genericEval, specificEval, datacenter != "", uaInfo.IsBot)
+	botScore := bots.EvaluateBot(genericEval, specificEval, geo.DataCenter != "", uaInfo.IsBot)
 
-	sessionStruct := live.CreateSessionStruct(ev, geo, uaInfo, utm, pageType, botScore, ref, param, datacenter)
-	duplicate, err := live.MainLiveWork(r.RDB, sessionStruct, eventID, clientID, store, ev.Event.Context.Document.Location.Href, param, &ev)
+	sessionStruct := live.CreateSessionStruct(ev, geo, uaInfo, utm, pageType, botScore, ref, param)
+	sessionResults, duplicate, err := live.MainLiveWork(r.RDB, sessionStruct, eventID, clientID, store, ev.Event.Context.Document.Location.Href, param, &ev)
 	if err != nil {
 		http.Error(w, "invalid sessiontmp", http.StatusBadRequest)
 		return
@@ -75,12 +77,40 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	outputData := output.Output{EventName: param, Timestamp: ev.Event.Timestamp, Data: ""}
+	outPut := models.Output{
+		EventName:        param,
+		EventID:          ev.Event.ID,
+		EventTime:        ev.Time,
+		TimeIn:           now.Unix(),
+		TimeOut:          time.Now().Unix(),
+		ShopName:         ev.Init.Data.Shop.Name,
+		ShopDomain:       store,
+		ClientID:         clientID,
+		SessionID:        sessionResults.SessionID,
+		CustomerID:       "", // figure out
+		LoggedIn:         sessionStruct.IsLoggedIn,
+		IP:               ip,
+		IPHash:           ipHash,
+		SessionStatus:    sessionResults.Status,
+		PageType:         string(pageType),
+		PreviousPurchase: sessionStruct.HasPreviousPurchase,
+		BotScore:         int(botScore),
+		Params:           other,
+		UA:               uaInfo,
+		Geo:              geo,
+		UTM:              utm,
+		Referrer:         ref,
+		Screen:           screen,
+		RequestSignals:   genericEval,
+		BotSignals:       specificEval,
 
-	if err := output.PublishOutput(context.Background(), r.PubSub, "topic", outputData); err != nil {
+		RawShopify: ev,
+	}
+
+	if err := output.PublishOutput(context.Background(), r.PubSub, "topic", outPut); err != nil {
 		http.Error(w, "couldn't push to pub sub", http.StatusBadRequest)
 		return
 	}
 
-	w.Write([]byte(sessionStruct.City + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + datacenter + strconv.Itoa(int(botScore))))
+	w.Write([]byte(sessionStruct.City + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + strconv.Itoa(int(botScore))))
 }

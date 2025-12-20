@@ -1,20 +1,27 @@
 package models
 
-type IngestedEvent struct {
-	EventName      string
-	EventTimestamp int64
-	ShopID         string
-	ShopDomain     string
+type Output struct {
+	EventName string
+	EventID   string
 
-	SessionID        string
+	EventTime int64
+	TimeIn    int64
+	TimeOut   int64
+
+	ShopName   string
+	ShopDomain string
+
+	ClientID   string
+	SessionID  string
+	CustomerID string
+	LoggedIn   bool
+	IP         string
+	IPHash     string
+
 	SessionStatus    string
 	PageType         string
-	LoggedIn         bool
 	PreviousPurchase bool
 	BotScore         int
-	Datacenter       string
-	IP               string
-	IPHash           string
 
 	Params map[string]string
 

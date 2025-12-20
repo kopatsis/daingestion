@@ -52,7 +52,7 @@ type SessionActiveState struct {
 	IsInCheckout  bool
 }
 
-func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo models.UAInfo, utm models.UTM, pageType steps.PageType, botScore bots.BotLevel, ref models.Referrer, param, datacenter string) SessionActiveState {
+func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo models.UAInfo, utm models.UTM, pageType steps.PageType, botScore bots.BotLevel, ref models.Referrer, param string) SessionActiveState {
 	sessionStruct := SessionActiveState{
 		Country:     geo.CountryISO,
 		Region:      geo.SubdivisionISO,
@@ -61,7 +61,7 @@ func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo model
 		Longitude:   geo.Longitude,
 		IsBot:       botScore > 0,
 		ASN:         geo.ASN,
-		ASNProvider: datacenter,
+		ASNProvider: geo.DataCenter,
 		DeviceType:  uaInfo.Type,
 		DeviceBrand: uaInfo.Brand,
 		OSName:      uaInfo.OSName,

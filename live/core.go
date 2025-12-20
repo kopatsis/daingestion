@@ -8,29 +8,29 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventID, clientID, store, url, param string, ev *models.IngestEvent) (bool, error) {
+func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventID, clientID, store, url, param string, ev *models.IngestEvent) (Result, bool, error) {
 
 	isDedupEvent, err := DedupEventID(client, store, eventID)
 	if err != nil {
-		return false, err
+		return Result{}, false, err
 	} else if isDedupEvent {
-		return true, nil
+		return Result{}, true, nil
 	}
 
 	isDedupView, err := Dedup(client, store, clientID, url, param)
 	if err != nil {
-		return false, err
+		return Result{}, false, err
 	} else if isDedupView {
-		return true, nil
+		return Result{}, true, nil
 	}
 
 	sessionResults, err := ManageSession(context.Background(), client, clientID, store)
 	if err != nil {
-		return false, err
+		return Result{}, false, err
 	}
 
 	if err := SetState(client, sessionResults.SessionID, sessionStruct); err != nil {
-		return false, err
+		return sessionResults, false, err
 	}
 
 	location := ""
@@ -78,8 +78,8 @@ func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventI
 	}
 
 	if err := PublishEvent(context.TODO(), client, lv); err != nil {
-		return false, err
+		return sessionResults, false, err
 	}
 
-	return false, nil
+	return sessionResults, false, nil
 }
