@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"dmd/models"
 	"net/netip"
 
 	"github.com/oschwald/maxminddb-golang/v2"
@@ -37,25 +38,10 @@ type asnRecord struct {
 	Org string `maxminddb:"autonomous_system_organization"`
 }
 
-type GeoData struct {
-	IP              string
-	CountryISO      string
-	CountryName     string
-	SubdivisionISO  string
-	SubdivisionName string
-	CityName        string
-	PostalCode      string
-	Latitude        float64
-	Longitude       float64
-	AccuracyRadius  uint16
-	ASN             uint
-	ASNOrg          string
-}
-
-func ExtractGeo(ipStr string, cityDB *maxminddb.Reader, asnDB *maxminddb.Reader) GeoData {
+func ExtractGeo(ipStr string, cityDB *maxminddb.Reader, asnDB *maxminddb.Reader) models.GeoData {
 	ip, err := netip.ParseAddr(ipStr)
 	if err != nil {
-		return GeoData{IP: ipStr}
+		return models.GeoData{IP: ipStr}
 	}
 
 	var c cityRecord
@@ -71,7 +57,7 @@ func ExtractGeo(ipStr string, cityDB *maxminddb.Reader, asnDB *maxminddb.Reader)
 		subName = c.Subdivisions[0].Names["en"]
 	}
 
-	return GeoData{
+	return models.GeoData{
 		IP:              ipStr,
 		CountryISO:      c.Country.ISOCode,
 		CountryName:     c.Country.Names["en"],

@@ -1,29 +1,15 @@
 package steps
 
 import (
+	"dmd/models"
 	"net/url"
 	"strings"
 )
 
-type Referrer struct {
-	Exists         bool
-	Raw            string
-	Protocol       string
-	Hostname       string
-	Port           string
-	Path           string
-	Query          string
-	Fragment       string
-	Origin         string
-	DomainOnly     string
-	IsSearchEngine bool
-	SearchEngine   string
-}
-
-func ParseReferrer(raw string) Referrer {
+func ParseReferrer(raw string) models.Referrer {
 	u, err := url.Parse(raw)
 	if err != nil || u.Scheme == "" || u.Host == "" {
-		return Referrer{Raw: raw}
+		return models.Referrer{Raw: raw}
 	}
 
 	host := u.Hostname()
@@ -34,7 +20,7 @@ func ParseReferrer(raw string) Referrer {
 
 	search, engine := SearchEngine(host)
 
-	return Referrer{
+	return models.Referrer{
 		Exists:         false,
 		Raw:            raw,
 		Protocol:       u.Scheme,

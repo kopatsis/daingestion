@@ -5,17 +5,8 @@ import (
 	"net/http"
 )
 
-type BotSignals struct {
-	ViewportImpossible    bool
-	ViewportContradiction bool
-	NavigatorCookieFalse  bool
-	NavigatorLangEmpty    bool
-	NavigatorLangsEmpty   bool
-	NavigatorUAEmpty      bool
-}
-
-func EvaluateSpecific(r *http.Request, ref string, nav models.Navigator, innerW, innerH, screenW, screenH int, shopDomain string) BotSignals {
-	s := BotSignals{}
+func EvaluateSpecific(r *http.Request, ref string, nav models.Navigator, innerW, innerH, screenW, screenH int, shopDomain string) models.BotSignals {
+	s := models.BotSignals{}
 
 	if innerW <= 0 || innerH <= 0 || screenW <= 0 || screenH <= 0 {
 		s.ViewportImpossible = true

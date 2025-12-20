@@ -1,21 +1,13 @@
 package steps
 
 import (
+	"dmd/models"
 	"net/url"
 	"strings"
 )
 
-type UTM struct {
-	Source   string
-	Medium   string
-	Campaign string
-	Term     string
-	Content  string
-	All      map[string]string
-}
-
-func ParseUTM(search string) UTM {
-	u := UTM{All: make(map[string]string)}
+func ParseUTM(search string) models.UTM {
+	u := models.UTM{All: make(map[string]string)}
 	s := strings.TrimPrefix(search, "?")
 	if s == "" {
 		return u

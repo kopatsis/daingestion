@@ -1,5 +1,7 @@
 package bots
 
+import "dmd/models"
+
 type BotLevel int
 
 const (
@@ -9,8 +11,8 @@ const (
 )
 
 func EvaluateBot(
-	req RequestSignals,
-	env BotSignals,
+	req models.RequestSignals,
+	env models.BotSignals,
 	asnIsDatacenter bool,
 	uaDeviceDetectorBot bool,
 ) BotLevel {

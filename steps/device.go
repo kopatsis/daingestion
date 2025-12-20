@@ -1,35 +1,12 @@
 package steps
 
 import (
+	"dmd/models"
+
 	"github.com/gamebtc/devicedetector"
 )
 
-type UAInfo struct {
-	Model           string
-	Brand           string
-	Type            string
-	OSVersion       string
-	OSShortName     string
-	OSName          string
-	OSPlatform      string
-	ClientType      string
-	ClientName      string
-	ClientVersion   string
-	ClientShortName string
-	ClientEngine    string
-	ClientEngineVer string
-	BotName         string
-	BotCategory     string
-	BotProducerName string
-	BotProducerURL  string
-	BotURL          string
-	IsBot           bool
-	IsMobile        bool
-	IsDesktop       bool
-	IsTouch         bool
-}
-
-func ParseUA(s string) UAInfo {
+func ParseUA(s string) models.UAInfo {
 	dd, _ := devicedetector.NewDeviceDetector("regexes")
 	info := dd.Parse(s)
 
@@ -37,7 +14,7 @@ func ParseUA(s string) UAInfo {
 	client := info.GetClient()
 	bot := info.GetBot()
 
-	out := UAInfo{
+	out := models.UAInfo{
 		Model:         info.Model,
 		Brand:         info.Brand,
 		Type:          info.Type,

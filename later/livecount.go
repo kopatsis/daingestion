@@ -2,7 +2,7 @@ package later
 
 import (
 	"context"
-	"dmd/steps"
+	"dmd/models"
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
@@ -17,14 +17,14 @@ func GetSessionField(ctx context.Context, rdb *redis.Client, sessionID, field st
 	return v, err
 }
 
-func GetSessionAll(ctx context.Context, rdb *redis.Client, sessionID string) (steps.GeoData, error) {
+func GetSessionAll(ctx context.Context, rdb *redis.Client, sessionID string) (models.GeoData, error) {
 	key := "session:" + sessionID
 	m, err := rdb.HGetAll(ctx, key).Result()
 	if err == redis.Nil {
-		return steps.GeoData{}, nil
+		return models.GeoData{}, nil
 	}
 	if err != nil {
-		return steps.GeoData{}, err
+		return models.GeoData{}, err
 	}
 
 	lat, _ := strconv.ParseFloat(m["Latitude"], 64)
@@ -32,7 +32,7 @@ func GetSessionAll(ctx context.Context, rdb *redis.Client, sessionID string) (st
 	acc, _ := strconv.ParseUint(m["AccuracyRadius"], 10, 16)
 	asn, _ := strconv.ParseUint(m["ASN"], 10, 32)
 
-	return steps.GeoData{
+	return models.GeoData{
 		IP:              m["IP"],
 		CountryISO:      m["CountryISO"],
 		CountryName:     m["CountryName"],

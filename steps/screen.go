@@ -1,11 +1,6 @@
 package steps
 
-type ScreenBuckets struct {
-	InnerWidthBucket   string
-	InnerHeightBucket  string
-	ScreenWidthBucket  string
-	ScreenHeightBucket string
-}
+import "dmd/models"
 
 func bucketWidth(w int) string {
 	switch {
@@ -35,8 +30,8 @@ func bucketHeight(h int) string {
 	}
 }
 
-func BucketScreenSizes(innerW, innerH, screenW, screenH int) ScreenBuckets {
-	return ScreenBuckets{
+func BucketScreenSizes(innerW, innerH, screenW, screenH int) models.ScreenBuckets {
+	return models.ScreenBuckets{
 		InnerWidthBucket:   bucketWidth(innerW),
 		InnerHeightBucket:  bucketHeight(innerH),
 		ScreenWidthBucket:  bucketWidth(screenW),

@@ -1,6 +1,7 @@
 package bots
 
 import (
+	"dmd/models"
 	"net"
 	"net/http"
 	"net/url"
@@ -9,19 +10,7 @@ import (
 	"github.com/x-way/crawlerdetect"
 )
 
-type RequestSignals struct {
-	ReferrerEmpty      bool
-	ReferrerMalformed  bool
-	IsBotCrawlerDetect bool
-	ConnectionClose    bool
-	MethodInvalid      bool
-	InvalidHTTPVersion bool
-	XFFEmpty           bool
-	XFFPrivate         bool
-	XFFMalformed       bool
-}
-
-func ExtractSignals(r *http.Request, rawRef, rawUA string) RequestSignals {
+func ExtractSignals(r *http.Request, rawRef, rawUA string) models.RequestSignals {
 	connection := r.Header.Get("Connection")
 	xff := r.Header.Get("X-Forwarded-For")
 	httpVer := r.Proto
@@ -29,7 +18,7 @@ func ExtractSignals(r *http.Request, rawRef, rawUA string) RequestSignals {
 
 	cd := crawlerdetect.New()
 
-	s := RequestSignals{}
+	s := models.RequestSignals{}
 
 	if rawRef == "" {
 		s.ReferrerEmpty = true
