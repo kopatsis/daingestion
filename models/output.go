@@ -11,17 +11,9 @@ type Output struct {
 	ShopName   string
 	ShopDomain string
 
-	ClientID   string
-	SessionID  string
-	CustomerID string
-	LoggedIn   bool
-	IP         string
-	IPHash     string
-
-	SessionStatus    string
-	PageType         string
-	PreviousPurchase bool
-	BotScore         int
+	ClientID      string
+	SessionID     string
+	SessionStatus string
 
 	Params map[string]string
 
@@ -32,6 +24,7 @@ type Output struct {
 	Screen         ScreenBuckets
 	RequestSignals RequestSignals
 	BotSignals     BotSignals
+	SessionMeta    SessionActiveState
 
 	RawShopify IngestEvent
 }

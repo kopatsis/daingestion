@@ -27,6 +27,7 @@ type UAInfo struct {
 
 type GeoData struct {
 	IP              string
+	IPHash          string
 	CountryISO      string
 	CountryName     string
 	SubdivisionISO  string
@@ -91,4 +92,45 @@ type BotSignals struct {
 	NavigatorLangEmpty    bool
 	NavigatorLangsEmpty   bool
 	NavigatorUAEmpty      bool
+}
+
+type SessionActiveState struct {
+	Country   string
+	Region    string
+	City      string
+	Latitude  float64
+	Longitude float64
+	Timezone  string
+
+	IsBot       bool
+	ASN         uint
+	ASNProvider string
+
+	IsLoggedIn          bool
+	CustomerID          string
+	HasPreviousPurchase bool
+
+	DeviceType  string
+	DeviceBrand string
+	OSName      string
+	BrowserName string
+	Language    string
+
+	RefDomain string
+	UTMSource string
+
+	RouteType string
+	Route     string
+	FullURL   string
+
+	IsViewingProduct bool
+	ActiveProductID  string
+	ActiveVariantID  string
+
+	IsViewingCollection bool
+	ActiveCollectionID  string
+
+	HasActiveCart bool
+	IsViewingCart bool
+	IsInCheckout  bool
 }

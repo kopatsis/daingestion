@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func MainLiveWork(client *redis.Client, sessionStruct SessionActiveState, eventID, clientID, store, url, param string, ev *models.IngestEvent) (Result, bool, error) {
+func MainLiveWork(client *redis.Client, sessionStruct models.SessionActiveState, eventID, clientID, store, url, param string, ev *models.IngestEvent) (Result, bool, error) {
 
 	isDedupEvent, err := DedupEventID(client, store, eventID)
 	if err != nil {

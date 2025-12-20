@@ -13,47 +13,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type SessionActiveState struct {
-	Country   string
-	Region    string
-	City      string
-	Latitude  float64
-	Longitude float64
-	Timezone  string
-
-	IsBot               bool
-	ASN                 uint
-	ASNProvider         string
-	IsLoggedIn          bool
-	HasPreviousPurchase bool
-
-	DeviceType  string
-	DeviceBrand string
-	OSName      string
-	BrowserName string
-	Language    string
-
-	RefDomain string
-	UTMSource string
-
-	RouteType string
-	Route     string
-	FullURL   string
-
-	IsViewingProduct bool
-	ActiveProductID  string
-	ActiveVariantID  string
-
-	IsViewingCollection bool
-	ActiveCollectionID  string
-
-	HasActiveCart bool
-	IsViewingCart bool
-	IsInCheckout  bool
-}
-
-func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo models.UAInfo, utm models.UTM, pageType steps.PageType, botScore bots.BotLevel, ref models.Referrer, param string) SessionActiveState {
-	sessionStruct := SessionActiveState{
+func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo models.UAInfo, utm models.UTM, pageType steps.PageType, botScore bots.BotLevel, ref models.Referrer, param string) models.SessionActiveState {
+	sessionStruct := models.SessionActiveState{
 		Country:     geo.CountryISO,
 		Region:      geo.SubdivisionISO,
 		City:        geo.CityName,
@@ -76,6 +37,7 @@ func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo model
 
 	if ev.Init.Data.Customer != nil {
 		sessionStruct.IsLoggedIn = true
+		sessionStruct.CustomerID = ev.Init.Data.Customer.ID
 		sessionStruct.HasPreviousPurchase = ev.Init.Data.Customer.OrdersCount > 0
 	}
 
@@ -105,7 +67,7 @@ func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo model
 	return sessionStruct
 }
 
-func SetState(rdb *redis.Client, sessionID string, s SessionActiveState) error {
+func SetState(rdb *redis.Client, sessionID string, s models.SessionActiveState) error {
 	key := "session:" + sessionID
 	_, err := rdb.HSet(context.TODO(), key, map[string]interface{}{
 		"Country":             s.Country,
@@ -144,11 +106,11 @@ func SetState(rdb *redis.Client, sessionID string, s SessionActiveState) error {
 	return rdb.Expire(context.TODO(), key, 300000000000).Err()
 }
 
-func GetState(ctx context.Context, rdb *redis.Client, sessionID string) SessionActiveState {
+func GetState(ctx context.Context, rdb *redis.Client, sessionID string) models.SessionActiveState {
 	key := "session:" + sessionID
 	m, err := rdb.HGetAll(ctx, key).Result()
 	if err != nil {
-		return SessionActiveState{}
+		return models.SessionActiveState{}
 	}
 
 	b1, _ := strconv.ParseBool(m["IsBot"])
@@ -163,7 +125,7 @@ func GetState(ctx context.Context, rdb *redis.Client, sessionID string) SessionA
 	b7, _ := strconv.ParseBool(m["IsViewingCart"])
 	b8, _ := strconv.ParseBool(m["IsInCheckout"])
 
-	return SessionActiveState{
+	return models.SessionActiveState{
 		Country:             m["Country"],
 		Region:              m["Region"],
 		City:                m["City"],

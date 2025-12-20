@@ -59,6 +59,7 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	ref := steps.ParseReferrer(ev.Event.Context.Document.Referrer)
 	utm, other := steps.ParseUTM(ev.Event.Context.Document.Location.Search), steps.ParseNonUTMParams(ev.Event.Context.Document.Location.Search)
 	geo := steps.ExtractGeo(ip, r.City, r.ASN)
+	geo.IPHash = ipHash
 	screen := steps.BucketScreenSizes(ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height)
 	pageType := steps.Classify(ev.Event.Context.Document.Location.Href)
 
@@ -78,31 +79,25 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	}
 
 	outPut := models.Output{
-		EventName:        param,
-		EventID:          ev.Event.ID,
-		EventTime:        ev.Time,
-		TimeIn:           now.Unix(),
-		TimeOut:          time.Now().Unix(),
-		ShopName:         ev.Init.Data.Shop.Name,
-		ShopDomain:       store,
-		ClientID:         clientID,
-		SessionID:        sessionResults.SessionID,
-		CustomerID:       "", // figure out
-		LoggedIn:         sessionStruct.IsLoggedIn,
-		IP:               ip,
-		IPHash:           ipHash,
-		SessionStatus:    sessionResults.Status,
-		PageType:         string(pageType),
-		PreviousPurchase: sessionStruct.HasPreviousPurchase,
-		BotScore:         int(botScore),
-		Params:           other,
-		UA:               uaInfo,
-		Geo:              geo,
-		UTM:              utm,
-		Referrer:         ref,
-		Screen:           screen,
-		RequestSignals:   genericEval,
-		BotSignals:       specificEval,
+		EventName:      param,
+		EventID:        ev.Event.ID,
+		EventTime:      ev.Time,
+		TimeIn:         now.Unix(),
+		TimeOut:        time.Now().Unix(),
+		ShopName:       ev.Init.Data.Shop.Name,
+		ShopDomain:     store,
+		ClientID:       clientID,
+		SessionID:      sessionResults.SessionID,
+		SessionStatus:  sessionResults.Status,
+		Params:         other,
+		UA:             uaInfo,
+		Geo:            geo,
+		UTM:            utm,
+		Referrer:       ref,
+		Screen:         screen,
+		RequestSignals: genericEval,
+		BotSignals:     specificEval,
+		SessionMeta:    sessionStruct,
 
 		RawShopify: ev,
 	}
