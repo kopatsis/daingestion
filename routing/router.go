@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
+	"github.com/gamebtc/devicedetector"
 	"github.com/oschwald/maxminddb-golang/v2"
 	"github.com/redis/go-redis/v9"
 )
@@ -24,10 +25,11 @@ type Router struct {
 	DataCenters *initial.DataCenterASNs
 	PubSub      *pubsub.Client
 	RDB         *redis.Client
+	DD          *devicedetector.DeviceDetector
 }
 
-func New(a *maxminddb.Reader, b *maxminddb.Reader, c *initial.DataCenterASNs, d *pubsub.Client, e *redis.Client) *Router {
-	return &Router{City: a, ASN: b, DataCenters: c, PubSub: d, RDB: e}
+func New(a *maxminddb.Reader, b *maxminddb.Reader, c *initial.DataCenterASNs, d *pubsub.Client, e *redis.Client, f *devicedetector.DeviceDetector) *Router {
+	return &Router{City: a, ASN: b, DataCenters: c, PubSub: d, RDB: e, DD: f}
 }
 
 func (r *Router) Register(mux *http.ServeMux) {
@@ -54,7 +56,7 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 
 	eventID, clientID, store := ev.Event.ID, ev.Event.ClientID, ev.Init.Data.Shop.MyShopifyDomain
 
-	uaInfo := steps.ParseUA(ev.Event.Context.Navigator.UserAgent)
+	uaInfo := steps.ParseUA(r.DD, ev.Event.Context.Navigator.UserAgent)
 	ip, ipHash := steps.GetClientIP(req)
 	ref := steps.ParseReferrer(ev.Event.Context.Document.Referrer)
 	utm, other := steps.ParseUTM(ev.Event.Context.Document.Location.Search), steps.ParseNonUTMParams(ev.Event.Context.Document.Location.Search)
@@ -98,8 +100,7 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		RequestSignals: genericEval,
 		BotSignals:     specificEval,
 		SessionMeta:    sessionStruct,
-
-		RawShopify: ev,
+		RawShopify:     ev,
 	}
 
 	if err := output.PublishOutput(context.Background(), r.PubSub, "topic", outPut); err != nil {

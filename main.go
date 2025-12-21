@@ -6,6 +6,8 @@ import (
 	"dmd/output"
 	"dmd/routing"
 	"net/http"
+
+	"github.com/gamebtc/devicedetector"
 )
 
 func main() {
@@ -24,9 +26,14 @@ func main() {
 		panic(err)
 	}
 
+	dd, err := devicedetector.NewDeviceDetector("regexes")
+	if err != nil {
+		panic(err)
+	}
+
 	rdb := initial.NewRedis()
 
-	r := routing.New(city, asn, &datacenters, pubsubClient, rdb)
+	r := routing.New(city, asn, &datacenters, pubsubClient, rdb, dd)
 
 	mux := http.NewServeMux()
 	r.Register(mux)

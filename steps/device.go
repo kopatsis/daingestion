@@ -6,8 +6,7 @@ import (
 	"github.com/gamebtc/devicedetector"
 )
 
-func ParseUA(s string) models.UAInfo {
-	dd, _ := devicedetector.NewDeviceDetector("regexes")
+func ParseUA(dd *devicedetector.DeviceDetector, s string) models.UAInfo {
 	info := dd.Parse(s)
 
 	os := info.GetOs()
