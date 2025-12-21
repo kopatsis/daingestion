@@ -2,6 +2,7 @@ package live
 
 import (
 	"context"
+	"dmd/logging"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,12 +20,23 @@ type Result struct {
 	Status    string
 }
 
-func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store string) (Result, error) {
+func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store, param, requestID string) (Result, error) {
 	key := "sess:" + store + ":" + clientID
 	now := time.Now().Unix()
 
 	vals, err := rdb.HMGet(ctx, key, "id", "ts").Result()
-	if err != nil {
+	if err != nil && err != redis.Nil {
+		logging.LogError(
+			"ERROR",
+			"session_id_missing",
+			"http",
+			store,
+			param,
+			requestID,
+			false,
+			"error other than blank retrieving session ID",
+		)
+
 		return Result{}, err
 	}
 
@@ -35,6 +47,16 @@ func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store strin
 		newID := "PXID-" + uuid.NewString()
 		_, err = rdb.HSet(ctx, key, "id", newID, "ts", now).Result()
 		if err != nil {
+			logging.LogError(
+				"ERROR",
+				"session_id_missing",
+				"http",
+				store,
+				param,
+				requestID,
+				false,
+				"failed to set new session id",
+			)
 			return Result{}, err
 		}
 		return Result{SessionID: newID, Status: SessionNewClient}, nil
@@ -47,6 +69,16 @@ func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store strin
 		newID := "PXID-" + uuid.NewString()
 		_, err = rdb.HSet(ctx, key, "id", newID, "ts", now).Result()
 		if err != nil {
+			logging.LogError(
+				"ERROR",
+				"session_id_missing",
+				"http",
+				store,
+				param,
+				requestID,
+				false,
+				"failed to set old session id",
+			)
 			return Result{}, err
 		}
 		return Result{SessionID: newID, Status: SessionExpired}, nil
@@ -54,10 +86,20 @@ func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store strin
 
 	_, err = rdb.HSet(ctx, key, "ts", now).Result()
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"session_id_missing",
+			"http",
+			store,
+			param,
+			requestID,
+			false,
+			"failed to set time on session id",
+		)
 		return Result{}, err
 	}
 
-	if err := AddActive(rdb, store, id); err != nil {
+	if err := AddActive(rdb, store, id, param, requestID); err != nil {
 		return Result{}, err
 	}
 

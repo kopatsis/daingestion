@@ -11,7 +11,6 @@ import (
 	"dmd/steps"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
@@ -96,12 +95,12 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	botScore := bots.EvaluateBot(genericEval, specificEval, geo.DataCenter != "", uaInfo.IsBot)
 
 	sessionStruct := live.CreateSessionStruct(ev, geo, uaInfo, utm, pageType, botScore, ref, param)
-	sessionResults, duplicate, err := live.MainLiveWork(r.RDB, sessionStruct, eventID, clientID, store, ev.Event.Context.Document.Location.Href, param, &ev)
+	sessionResults, discard, err := live.MainLiveWork(r.RDB, sessionStruct, eventID, clientID, store, ev.Event.Context.Document.Location.Href, param, requestID, &ev)
 	if err != nil {
 		http.Error(w, "invalid sessiontmp", http.StatusBadRequest)
 		return
-	} else if duplicate {
-		http.Error(w, "duplicate", http.StatusBadRequest)
+	} else if discard {
+		http.Error(w, "discard session", http.StatusBadRequest)
 		return
 	}
 
@@ -134,5 +133,6 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		return
 	}
 
-	w.Write([]byte(sessionStruct.City + ip + ipHash + ref.DomainOnly + utm.Campaign + other["a"] + geo.ASNOrg + screen.ScreenHeightBucket + string(pageType) + strconv.Itoa(int(botScore))))
+	w.WriteHeader(http.StatusNoContent)
+
 }

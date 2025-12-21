@@ -16,6 +16,16 @@ func NewPubSubClient(ctx context.Context, projectID string) (*pubsub.Client, err
 func PublishOutput(ctx context.Context, client *pubsub.Client, topicID string, out models.Output) error {
 	b, err := json.Marshal(out)
 	if err != nil {
+		logging.LogError(
+			"CRITICAL",
+			"pubsub_marshal_failed",
+			"pubsub",
+			out.ShopDomain,
+			out.EventName,
+			out.RequestID,
+			true,
+			"failed to marshal event to pubsub",
+		)
 		return err
 	}
 	p := client.Publisher(topicID)
@@ -31,7 +41,6 @@ func PublishOutput(ctx context.Context, client *pubsub.Client, topicID string, o
 			true,
 			"failed to publish event to pubsub",
 		)
-
 		return err
 	}
 	return nil

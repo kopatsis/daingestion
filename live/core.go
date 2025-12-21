@@ -8,28 +8,35 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func MainLiveWork(client *redis.Client, sessionStruct models.SessionActiveState, eventID, clientID, store, url, param string, ev *models.IngestEvent) (Result, bool, error) {
+func MainLiveWork(client *redis.Client, sessionStruct models.SessionActiveState, eventID, clientID, store, url, param, reqID string, ev *models.IngestEvent) (Result, bool, error) {
 
-	isDedupEvent, err := DedupEventID(client, store, eventID)
+	isDedupEvent, err := DedupEventID(client, store, param, eventID, reqID)
 	if err != nil {
 		return Result{}, false, err
 	} else if isDedupEvent {
 		return Result{}, true, nil
 	}
 
-	isDedupView, err := Dedup(client, store, clientID, url, param)
+	isDedupView, err := Dedup(client, store, clientID, url, param, reqID)
 	if err != nil {
 		return Result{}, false, err
 	} else if isDedupView {
 		return Result{}, true, nil
 	}
 
-	sessionResults, err := ManageSession(context.Background(), client, clientID, store)
+	sessionResults, err := ManageSession(context.Background(), client, clientID, store, param, reqID)
 	if err != nil {
 		return Result{}, false, err
 	}
 
-	if err := SetState(client, sessionResults.SessionID, sessionStruct); err != nil {
+	allowedStore, err := CheckStoreAndIncrement(context.Background(), client, store, param, reqID, sessionResults.Status == SessionNewClient)
+	if err != nil {
+		return Result{}, false, err
+	} else if !allowedStore {
+		return Result{}, true, nil
+	}
+
+	if err := SetState(client, sessionResults.SessionID, reqID, store, param, sessionStruct); err != nil {
 		return sessionResults, false, err
 	}
 

@@ -3,6 +3,7 @@ package live
 import (
 	"context"
 	"dmd/bots"
+	"dmd/logging"
 	"dmd/models"
 	"dmd/steps"
 	"fmt"
@@ -67,7 +68,7 @@ func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo model
 	return sessionStruct
 }
 
-func SetState(rdb *redis.Client, sessionID string, s models.SessionActiveState) error {
+func SetState(rdb *redis.Client, sessionID, requestID, store, param string, s models.SessionActiveState) error {
 	key := "session:" + sessionID
 	_, err := rdb.HSet(context.TODO(), key, map[string]interface{}{
 		"Country":             s.Country,
@@ -101,6 +102,17 @@ func SetState(rdb *redis.Client, sessionID string, s models.SessionActiveState) 
 		"IsInCheckout":        strconv.FormatBool(s.IsInCheckout),
 	}).Result()
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"session_metadata_save_failed",
+			"redis",
+			store,
+			param,
+			requestID,
+			true,
+			"failed to persist session metadata",
+		)
+
 		return err
 	}
 	return rdb.Expire(context.TODO(), key, 300000000000).Err()
@@ -158,16 +170,36 @@ func GetState(ctx context.Context, rdb *redis.Client, sessionID string) models.S
 	}
 }
 
-func AddActive(rdb *redis.Client, store, sessionID string) error {
+func AddActive(rdb *redis.Client, store, sessionID, param, requestID string) error {
 	now := time.Now()
 	b := now.Unix() / 15
 	k := fmt.Sprintf("active:%s:%d", store, b)
 
 	if err := rdb.SAdd(context.TODO(), k, sessionID).Err(); err != nil {
+		logging.LogError(
+			"ERROR",
+			"session_id_missing",
+			"http",
+			store,
+			param,
+			requestID,
+			false,
+			"failed to add session ID to active list",
+		)
 		return err
 	}
 
 	if err := rdb.Expire(context.TODO(), k, 4*time.Minute+15*time.Second).Err(); err != nil {
+		logging.LogError(
+			"ERROR",
+			"session_id_missing",
+			"http",
+			store,
+			param,
+			requestID,
+			false,
+			"failed to add expire session ID active list",
+		)
 		return err
 	}
 
