@@ -5,6 +5,7 @@ import (
 	"dmd/bots"
 	"dmd/initial"
 	"dmd/live"
+	"dmd/logging"
 	"dmd/models"
 	"dmd/output"
 	"dmd/steps"
@@ -15,6 +16,7 @@ import (
 
 	"cloud.google.com/go/pubsub/v2"
 	"github.com/gamebtc/devicedetector"
+	"github.com/google/uuid"
 	"github.com/oschwald/maxminddb-golang/v2"
 	"github.com/redis/go-redis/v9"
 )
@@ -41,20 +43,43 @@ func (r *Router) Register(mux *http.ServeMux) {
 
 func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) {
 	now := time.Now()
-
-	if !steps.CheckEvent(param) {
-		http.Error(w, "invalid event", http.StatusBadRequest)
-		return
-	}
+	requestID := "RQID-" + uuid.NewString()
 
 	var ev models.IngestEvent
 	err := json.NewDecoder(req.Body).Decode(&ev)
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"event_binding_failed",
+			"http",
+			"",
+			param,
+			requestID,
+			false,
+			"failed to bind event payload",
+		)
+
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
 
 	eventID, clientID, store := ev.Event.ID, ev.Event.ClientID, ev.Init.Data.Shop.MyShopifyDomain
+
+	if !steps.CheckEvent(param) {
+		logging.LogError(
+			"ERROR",
+			"invalid_event_type",
+			"http",
+			store,
+			param,
+			requestID,
+			false,
+			"unknown or unsupported event type",
+		)
+
+		http.Error(w, "invalid event", http.StatusBadRequest)
+		return
+	}
 
 	uaInfo := steps.ParseUA(r.DD, ev.Event.Context.Navigator.UserAgent)
 	ip, ipHash := steps.GetClientIP(req)
@@ -91,6 +116,7 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 		ClientID:       clientID,
 		SessionID:      sessionResults.SessionID,
 		SessionStatus:  sessionResults.Status,
+		RequestID:      requestID,
 		Params:         other,
 		UA:             uaInfo,
 		Geo:            geo,

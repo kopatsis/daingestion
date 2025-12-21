@@ -2,6 +2,7 @@ package output
 
 import (
 	"context"
+	"dmd/logging"
 	"dmd/models"
 	"encoding/json"
 
@@ -19,6 +20,19 @@ func PublishOutput(ctx context.Context, client *pubsub.Client, topicID string, o
 	}
 	p := client.Publisher(topicID)
 	r := p.Publish(ctx, &pubsub.Message{Data: b})
-	_, err = r.Get(ctx)
-	return err
+	if _, err := r.Get(ctx); err != nil {
+		logging.LogError(
+			"CRITICAL",
+			"pubsub_publish_failed",
+			"pubsub",
+			out.ShopDomain,
+			out.EventName,
+			out.RequestID,
+			true,
+			"failed to publish event to pubsub",
+		)
+
+		return err
+	}
+	return nil
 }

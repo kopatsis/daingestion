@@ -15,7 +15,8 @@ type Output struct {
 	SessionID     string
 	SessionStatus string
 
-	Params map[string]string
+	RequestID string
+	Params    map[string]string
 
 	UA             UAInfo
 	Geo            GeoData
