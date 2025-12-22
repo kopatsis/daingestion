@@ -63,28 +63,28 @@ func MainLiveWork(client *redis.Client, sessionStruct models.SessionActiveState,
 	}.WithHumanizedEvent()
 
 	if param == "search_submitted" {
-		searchQuery, err := ExtractSearchQuery(ev.Event.Data)
+		searchQuery, err := ExtractSearchQuery(ev.Event.Data, store, param, reqID)
 		if err == nil {
 			lv.Search = &searchQuery
 		}
 	} else if param == "checkout_completed" {
-		orderID, err := ExtractCheckoutOrderID(ev.Event.Data)
+		orderID, err := ExtractCheckoutOrderID(ev.Event.Data, store, param, reqID)
 		if err == nil {
 			lv.OrderID = &orderID
 		}
 	} else if param == "collection_viewed" {
-		collectionTitle, err := ExtractCollectionTitle(ev.Event.Data)
+		collectionTitle, err := ExtractCollectionTitle(ev.Event.Data, store, param, reqID)
 		if err == nil {
 			lv.Collection = &collectionTitle
 		}
 	} else if strings.Contains(param, "product") {
-		orderID, err := ExtractCheckoutOrderID(ev.Event.Data)
+		orderID, err := ExtractCheckoutOrderID(ev.Event.Data, store, param, reqID)
 		if err == nil {
 			lv.OrderID = &orderID
 		}
 	}
 
-	if err := PublishEvent(context.TODO(), client, lv); err != nil {
+	if err := PublishEvent(context.TODO(), client, lv, reqID); err != nil {
 		return sessionResults, false, err
 	}
 

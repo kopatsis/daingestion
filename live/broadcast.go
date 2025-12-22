@@ -2,8 +2,10 @@ package live
 
 import (
 	"context"
+	"dmd/logging"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -61,11 +63,90 @@ func (LiveEvent) humanize(raw string) string {
 	}
 }
 
-func PublishEvent(ctx context.Context, rdb *redis.Client, e LiveEvent) error {
+func PublishEvent(ctx context.Context, rdb *redis.Client, e LiveEvent, reqID string) error {
 	ch := fmt.Sprintf("events:%s:%s", e.Store, e.EventCode)
 	b, err := json.Marshal(e)
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"live_broadcast_failed",
+			"redis",
+			e.Store,
+			e.EventName,
+			reqID,
+			false,
+			"failed to marshal broadcast live event",
+		)
+
 		return err
 	}
-	return rdb.Publish(context.TODO(), ch, b).Err()
+	if err := rdb.Publish(context.TODO(), ch, b).Err(); err != nil {
+		logging.LogError(
+			"ERROR",
+			"live_broadcast_failed",
+			"redis",
+			e.Store,
+			e.EventName,
+			reqID,
+			false,
+			"failed to broadcast live event",
+		)
+		return err
+	}
+	return nil
+}
+
+func StreamEventsSSE(
+	rdb *redis.Client,
+	store string,
+	eventCode string,
+) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "stream unsupported", http.StatusInternalServerError)
+			return
+		}
+
+		ch := fmt.Sprintf("events:%s:%s", store, eventCode)
+		sub := rdb.Subscribe(ctx, ch)
+		_, err := sub.Receive(ctx)
+		if err != nil {
+			return
+		}
+		defer sub.Close()
+
+		msgCh := sub.Channel()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case msg := <-msgCh:
+				if msg == nil {
+					return
+				}
+
+				var e LiveEvent
+				if err := json.Unmarshal([]byte(msg.Payload), &e); err != nil {
+					continue
+				}
+
+				b, err := json.Marshal(e)
+				if err != nil {
+					continue
+				}
+
+				fmt.Fprintf(w, "data: %s\n\n", b)
+				flusher.Flush()
+			}
+		}
+	}
 }

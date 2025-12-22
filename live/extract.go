@@ -1,6 +1,9 @@
 package live
 
-import "encoding/json"
+import (
+	"dmd/logging"
+	"encoding/json"
+)
 
 type ProductIDs struct {
 	ProductVariant struct {
@@ -12,10 +15,20 @@ type ProductIDs struct {
 }
 
 // variant ID, product ID
-func ExtractProductIDs(raw json.RawMessage) (string, string, error) {
+func ExtractProductIDs(raw json.RawMessage, store, eventType, requestID string) (string, string, error) {
 	var d ProductIDs
 	err := json.Unmarshal(raw, &d)
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"extraction_failure",
+			"redis",
+			store,
+			eventType,
+			requestID,
+			true,
+			"unable to unmarshal product ids",
+		)
 		return "", "", err
 	}
 	return d.ProductVariant.ID, d.ProductVariant.Product.ID, nil
@@ -28,10 +41,20 @@ type DataCollection struct {
 }
 
 // collection ID
-func ExtractCollectionID(raw json.RawMessage) (string, error) {
+func ExtractCollectionID(raw json.RawMessage, store, eventType, requestID string) (string, error) {
 	var d DataCollection
 	err := json.Unmarshal(raw, &d)
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"extraction_failure",
+			"redis",
+			store,
+			eventType,
+			requestID,
+			true,
+			"unable to unmarshal collection",
+		)
 		return "", err
 	}
 	return d.Collection.ID, nil
@@ -86,10 +109,20 @@ type DataCheckout struct {
 	} `json:"checkout"`
 }
 
-func ExtractCheckoutLineIDs(raw json.RawMessage) ([]LineIDs, error) {
+func ExtractCheckoutLineIDs(raw json.RawMessage, store, eventType, requestID string) ([]LineIDs, error) {
 	var d DataCheckout
 	err := json.Unmarshal(raw, &d)
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"extraction_failure",
+			"redis",
+			store,
+			eventType,
+			requestID,
+			true,
+			"unable to unmarshal checkout",
+		)
 		return nil, err
 	}
 
@@ -110,10 +143,20 @@ type DataProductVariantTitle struct {
 	} `json:"productVariant"`
 }
 
-func ExtractProductVariantTitle(raw json.RawMessage) (string, error) {
+func ExtractProductVariantTitle(raw json.RawMessage, store, eventType, requestID string) (string, error) {
 	var d DataProductVariantTitle
 	err := json.Unmarshal(raw, &d)
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"extraction_failure",
+			"redis",
+			store,
+			eventType,
+			requestID,
+			true,
+			"unable to unmarshal variant title",
+		)
 		return "", err
 	}
 	return d.ProductVariant.Title, nil
@@ -125,10 +168,20 @@ type DataCollectionTitle struct {
 	} `json:"collection"`
 }
 
-func ExtractCollectionTitle(raw json.RawMessage) (string, error) {
+func ExtractCollectionTitle(raw json.RawMessage, store, eventType, requestID string) (string, error) {
 	var d DataCollectionTitle
 	err := json.Unmarshal(raw, &d)
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"extraction_failure",
+			"redis",
+			store,
+			eventType,
+			requestID,
+			true,
+			"unable to unmarshal collection title",
+		)
 		return "", err
 	}
 	return d.Collection.Title, nil
@@ -140,10 +193,20 @@ type DataSearchQuery struct {
 	} `json:"searchResult"`
 }
 
-func ExtractSearchQuery(raw json.RawMessage) (string, error) {
+func ExtractSearchQuery(raw json.RawMessage, store, eventType, requestID string) (string, error) {
 	var d DataSearchQuery
 	err := json.Unmarshal(raw, &d)
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"extraction_failure",
+			"redis",
+			store,
+			eventType,
+			requestID,
+			true,
+			"unable to unmarshal search query",
+		)
 		return "", err
 	}
 	return d.SearchResult.Query, nil
@@ -157,10 +220,20 @@ type DataCheckoutOrderID struct {
 	} `json:"checkout"`
 }
 
-func ExtractCheckoutOrderID(raw json.RawMessage) (string, error) {
+func ExtractCheckoutOrderID(raw json.RawMessage, store, eventType, requestID string) (string, error) {
 	var d DataCheckoutOrderID
 	err := json.Unmarshal(raw, &d)
 	if err != nil {
+		logging.LogError(
+			"ERROR",
+			"extraction_failure",
+			"redis",
+			store,
+			eventType,
+			requestID,
+			true,
+			"unable to unmarshal order ID",
+		)
 		return "", err
 	}
 	return d.Checkout.Order.ID, nil

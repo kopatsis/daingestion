@@ -14,7 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo models.UAInfo, utm models.UTM, pageType steps.PageType, botScore bots.BotLevel, ref models.Referrer, param string) models.SessionActiveState {
+func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo models.UAInfo, utm models.UTM, pageType steps.PageType, botScore bots.BotLevel, ref models.Referrer, store, param, reqID string) models.SessionActiveState {
 	sessionStruct := models.SessionActiveState{
 		Country:     geo.CountryISO,
 		Region:      geo.SubdivisionISO,
@@ -43,14 +43,14 @@ func CreateSessionStruct(ev models.IngestEvent, geo models.GeoData, uaInfo model
 	}
 
 	if param == "product_viewed" {
-		variantID, productID, err := ExtractProductIDs(ev.Event.Data)
+		variantID, productID, err := ExtractProductIDs(ev.Event.Data, store, param, reqID)
 		sessionStruct.IsViewingProduct = true
 		if err == nil {
 			sessionStruct.ActiveProductID = productID
 			sessionStruct.ActiveVariantID = variantID
 		}
 	} else if param == "collection_viewed" {
-		collectionID, err := ExtractCollectionID(ev.Event.Data)
+		collectionID, err := ExtractCollectionID(ev.Event.Data, store, param, reqID)
 		sessionStruct.IsViewingCollection = true
 		if err == nil {
 			sessionStruct.ActiveCollectionID = collectionID
@@ -204,36 +204,4 @@ func AddActive(rdb *redis.Client, store, sessionID, param, requestID string) err
 	}
 
 	return nil
-}
-
-func GetActiveLast16Buckets(rdb *redis.Client, store string) ([]string, error) {
-	now := time.Now().Unix()
-	currentBucket := now / 15
-
-	if now%15 != 0 {
-		currentBucket--
-	}
-
-	startBucket := currentBucket - 15
-
-	ctx := context.TODO()
-	combined := make(map[string]struct{})
-
-	for b := startBucket; b <= currentBucket; b++ {
-		key := fmt.Sprintf("active:%s:%d", store, b)
-		members, err := rdb.SMembers(ctx, key).Result()
-		if err != nil && err != redis.Nil {
-			return nil, err
-		}
-		for _, m := range members {
-			combined[m] = struct{}{}
-		}
-	}
-
-	out := make([]string, 0, len(combined))
-	for k := range combined {
-		out = append(out, k)
-	}
-
-	return out, nil
 }

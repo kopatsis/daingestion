@@ -94,7 +94,7 @@ func (r *Router) Ingest(w http.ResponseWriter, req *http.Request, param string) 
 	specificEval := bots.EvaluateSpecific(req, ev.Event.Context.Document.Referrer, ev.Event.Context.Navigator, ev.Event.Context.Window.InnerWidth, ev.Event.Context.Window.InnerHeight, ev.Event.Context.Window.Screen.Width, ev.Event.Context.Window.Screen.Height, ev.Init.Data.Shop.MyShopifyDomain)
 	botScore := bots.EvaluateBot(genericEval, specificEval, geo.DataCenter != "", uaInfo.IsBot)
 
-	sessionStruct := live.CreateSessionStruct(ev, geo, uaInfo, utm, pageType, botScore, ref, param)
+	sessionStruct := live.CreateSessionStruct(ev, geo, uaInfo, utm, pageType, botScore, ref, param, store, requestID)
 	sessionResults, discard, err := live.MainLiveWork(r.RDB, sessionStruct, eventID, clientID, store, ev.Event.Context.Document.Location.Href, param, requestID, &ev)
 	if err != nil {
 		http.Error(w, "invalid sessiontmp", http.StatusBadRequest)
