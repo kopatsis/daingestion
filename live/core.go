@@ -11,16 +11,14 @@ import (
 func MainLiveWork(client *redis.Client, sessionStruct models.SessionActiveState, eventID, clientID, store, url, param, reqID string, ev *models.IngestEvent) (Result, bool, error) {
 
 	isDedupEvent, err := DedupEventID(client, store, param, eventID, reqID)
-	if err != nil {
-		return Result{}, false, err
-	} else if isDedupEvent {
+	// err, but not going to exit out just because unsure if duplicate
+	if isDedupEvent && err == nil {
 		return Result{}, true, nil
 	}
 
 	isDedupView, err := Dedup(client, store, clientID, url, param, reqID)
-	if err != nil {
-		return Result{}, false, err
-	} else if isDedupView {
+	// err, but not going to exit out just because unsure if duplicate
+	if isDedupView && err == nil {
 		return Result{}, true, nil
 	}
 
@@ -36,9 +34,8 @@ func MainLiveWork(client *redis.Client, sessionStruct models.SessionActiveState,
 		return Result{}, true, nil
 	}
 
-	if err := SetState(client, sessionResults.SessionID, reqID, store, param, sessionStruct); err != nil {
-		return sessionResults, false, err
-	}
+	SetState(client, sessionResults.SessionID, reqID, store, param, sessionStruct)
+	// err, but not going to exit out just because failed to set metadata
 
 	location := ""
 	if sessionStruct.Country == "" {
@@ -84,9 +81,8 @@ func MainLiveWork(client *redis.Client, sessionStruct models.SessionActiveState,
 		}
 	}
 
-	if err := PublishEvent(context.TODO(), client, lv, reqID); err != nil {
-		return sessionResults, false, err
-	}
+	PublishEvent(context.TODO(), client, lv, reqID)
+	// err, but not going to exit out just because failed to live publish
 
 	return sessionResults, false, nil
 }

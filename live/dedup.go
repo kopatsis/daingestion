@@ -10,7 +10,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// redo
 func Dedup(client *redis.Client, store, clientID, url, param, requestID string) (bool, error) {
 
 	if !(strings.Contains(param, "viewed") || strings.Contains(param, "started") || param == "search_submitted") {
