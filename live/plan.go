@@ -13,9 +13,9 @@ func CheckStoreAndIncrement(ctx context.Context, rdb *redis.Client, store, param
 	exists, err := rdb.Exists(ctx, storeKey).Result()
 	if err != nil {
 		logging.LogError(
-			"ERROR",
+			"FAILURE",
 			"plan_check_failed",
-			"http",
+			"redis",
 			store,
 			param,
 			requestID,
@@ -34,9 +34,9 @@ func CheckStoreAndIncrement(ctx context.Context, rdb *redis.Client, store, param
 		_, err = rdb.Incr(ctx, counterKey).Result()
 		if err != nil {
 			logging.LogError(
-				"ERROR",
+				"FAILURE",
 				"plan_check_failed",
-				"http",
+				"redis",
 				store,
 				param,
 				requestID,

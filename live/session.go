@@ -27,9 +27,9 @@ func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store, para
 	vals, err := rdb.HMGet(ctx, key, "id", "ts").Result()
 	if err != nil && err != redis.Nil {
 		logging.LogError(
-			"ERROR",
+			"FAILURE",
 			"session_id_missing",
-			"http",
+			"redis",
 			store,
 			param,
 			requestID,
@@ -48,9 +48,9 @@ func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store, para
 		_, err = rdb.HSet(ctx, key, "id", newID, "ts", now).Result()
 		if err != nil {
 			logging.LogError(
-				"ERROR",
+				"FAILURE",
 				"session_id_missing",
-				"http",
+				"redis",
 				store,
 				param,
 				requestID,
@@ -70,9 +70,9 @@ func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store, para
 		_, err = rdb.HSet(ctx, key, "id", newID, "ts", now).Result()
 		if err != nil {
 			logging.LogError(
-				"ERROR",
+				"FAILURE",
 				"session_id_missing",
-				"http",
+				"redis",
 				store,
 				param,
 				requestID,
@@ -87,9 +87,9 @@ func ManageSession(ctx context.Context, rdb *redis.Client, clientID, store, para
 	_, err = rdb.HSet(ctx, key, "ts", now).Result()
 	if err != nil {
 		logging.LogError(
-			"ERROR",
+			"FAILURE",
 			"session_id_missing",
-			"http",
+			"redis",
 			store,
 			param,
 			requestID,

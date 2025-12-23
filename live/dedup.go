@@ -10,6 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// redo
 func Dedup(client *redis.Client, store, clientID, url, param, requestID string) (bool, error) {
 
 	if !(strings.Contains(param, "viewed") || strings.Contains(param, "started") || param == "search_submitted") {
@@ -22,7 +23,7 @@ func Dedup(client *redis.Client, store, clientID, url, param, requestID string) 
 	v, err := client.Get(context.TODO(), key).Result()
 	if err != nil && err != redis.Nil {
 		logging.LogError(
-			"ERROR",
+			"FAILURE",
 			"dedup_view_check_failed",
 			"redis",
 			store,
@@ -39,7 +40,19 @@ func Dedup(client *redis.Client, store, clientID, url, param, requestID string) 
 			URL string
 			TS  int64
 		}
-		_ = json.Unmarshal([]byte(v), &prev)
+		if err := json.Unmarshal([]byte(v), &prev); err != nil {
+			logging.LogError(
+				"FAILURE",
+				"dedup_view_check_failed",
+				"json",
+				store,
+				param,
+				requestID,
+				true,
+				"unmarshal error viewing key during dedup check",
+			)
+			return false, err
+		}
 		if prev.URL == url && now-prev.TS < 4 {
 			return true, nil
 		}
@@ -48,10 +61,10 @@ func Dedup(client *redis.Client, store, clientID, url, param, requestID string) 
 		URL string
 		TS  int64
 	}{URL: url, TS: now})
-	err = client.Set(context.TODO(), key, b, 5*time.Second).Err()
+	err = client.Set(context.TODO(), key, b, 4*time.Second).Err()
 	if err != nil {
 		logging.LogError(
-			"ERROR",
+			"DUPE",
 			"dedup_view_check_failed",
 			"redis",
 			store,
@@ -70,7 +83,7 @@ func DedupEventID(client *redis.Client, store, eventType, eventID, requestID str
 	ok, err := client.SetNX(context.TODO(), key, "", 90*time.Second).Result()
 	if err != nil {
 		logging.LogError(
-			"ERROR",
+			"FAILURE",
 			"dedup_event_check_failed",
 			"redis",
 			store,
@@ -81,6 +94,18 @@ func DedupEventID(client *redis.Client, store, eventType, eventID, requestID str
 		)
 
 		return false, err
+	}
+	if ok {
+		logging.LogError(
+			"DUPE",
+			"dedup_event_check",
+			"dupe",
+			store,
+			eventType,
+			requestID,
+			true,
+			"confirmed duplicate event in system",
+		)
 	}
 	return ok, nil
 }

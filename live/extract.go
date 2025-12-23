@@ -22,7 +22,7 @@ func ExtractProductIDs(raw json.RawMessage, store, eventType, requestID string) 
 		logging.LogError(
 			"ERROR",
 			"extraction_failure",
-			"redis",
+			"json",
 			store,
 			eventType,
 			requestID,
@@ -48,7 +48,7 @@ func ExtractCollectionID(raw json.RawMessage, store, eventType, requestID string
 		logging.LogError(
 			"ERROR",
 			"extraction_failure",
-			"redis",
+			"json",
 			store,
 			eventType,
 			requestID,
@@ -116,7 +116,7 @@ func ExtractCheckoutLineIDs(raw json.RawMessage, store, eventType, requestID str
 		logging.LogError(
 			"ERROR",
 			"extraction_failure",
-			"redis",
+			"json",
 			store,
 			eventType,
 			requestID,
@@ -150,7 +150,7 @@ func ExtractProductVariantTitle(raw json.RawMessage, store, eventType, requestID
 		logging.LogError(
 			"ERROR",
 			"extraction_failure",
-			"redis",
+			"json",
 			store,
 			eventType,
 			requestID,
@@ -175,7 +175,7 @@ func ExtractCollectionTitle(raw json.RawMessage, store, eventType, requestID str
 		logging.LogError(
 			"ERROR",
 			"extraction_failure",
-			"redis",
+			"json",
 			store,
 			eventType,
 			requestID,
@@ -200,7 +200,7 @@ func ExtractSearchQuery(raw json.RawMessage, store, eventType, requestID string)
 		logging.LogError(
 			"ERROR",
 			"extraction_failure",
-			"redis",
+			"json",
 			store,
 			eventType,
 			requestID,
@@ -227,7 +227,7 @@ func ExtractCheckoutOrderID(raw json.RawMessage, store, eventType, requestID str
 		logging.LogError(
 			"ERROR",
 			"extraction_failure",
-			"redis",
+			"json",
 			store,
 			eventType,
 			requestID,

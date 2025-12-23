@@ -68,9 +68,9 @@ func PublishEvent(ctx context.Context, rdb *redis.Client, e LiveEvent, reqID str
 	b, err := json.Marshal(e)
 	if err != nil {
 		logging.LogError(
-			"ERROR",
+			"FAILURE",
 			"live_broadcast_failed",
-			"redis",
+			"json",
 			e.Store,
 			e.EventName,
 			reqID,
@@ -82,7 +82,7 @@ func PublishEvent(ctx context.Context, rdb *redis.Client, e LiveEvent, reqID str
 	}
 	if err := rdb.Publish(context.TODO(), ch, b).Err(); err != nil {
 		logging.LogError(
-			"ERROR",
+			"FAILURE",
 			"live_broadcast_failed",
 			"redis",
 			e.Store,

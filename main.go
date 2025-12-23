@@ -15,7 +15,7 @@ func main() {
 	datacenters, err := initial.LoadASNs()
 	if err != nil {
 		logging.LogError(
-			"ERROR",
+			"CRITICAL",
 			"asn_datacenter_load_failed",
 			"startup",
 			"",
@@ -30,7 +30,7 @@ func main() {
 	city, asn, err := initial.LoadGeoLite()
 	if err != nil {
 		logging.LogError(
-			"ERROR",
+			"CRITICAL",
 			"geolite_load_failed",
 			"startup",
 			"",
@@ -62,7 +62,7 @@ func main() {
 	dd, err := devicedetector.NewDeviceDetector("regexes")
 	if err != nil {
 		logging.LogError(
-			"ERROR",
+			"CRITICAL",
 			"device_detector_load_failed",
 			"startup",
 			"",
